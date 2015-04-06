@@ -34,4 +34,7 @@ For an index trend model the index at each time point is computed.
 If bootstrap samples are available, bootstrap confidence intervals for the trend
 or index values are also computed.
 }
+\author{
+Jonas Knape
+}
 

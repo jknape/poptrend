@@ -2,6 +2,8 @@
 
 S3method(plot,trend)
 S3method(print,summary.trend)
+S3method(print,trend)
+S3method(summary,trend)
 export(change)
 export(checkFit)
 export(fitTrend)

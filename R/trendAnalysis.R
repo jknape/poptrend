@@ -227,7 +227,7 @@ change = function(trend, start, end, alpha = .05) {
   } else
     CI = NULL
   cat("Estimated percent change from ", trend$timeVar, " = ",  tGrid[sInd], " to ", tGrid[eInd], ": ", format(pc, digits = 2), "% ", 
-      ifelse(is.null(CI), "", paste0("(", format(CI[1], digits = 2),"%, ", format(CI[2], digits =2), "%)")), sep = "")
+      ifelse(is.null(CI), "", paste0("(", format(CI[1], digits = 2),"%, ", format(CI[2], digits =2), "%)")), "\n",sep = "")
   
   invisible(list(percentChange = pc, CI = CI, start = start, end = end))
 }
@@ -255,6 +255,7 @@ getRuns = function(index) {
 ##' @title Print a trend object.
 ##' @param x A trend object.
 ##' @param ... Not used.
+##' @export
 ##' @author Jonas Knape
 print.trend = function(x, ...) {
   print(x$family)
@@ -286,6 +287,8 @@ print.trend = function(x, ...) {
 ##'               By default, the first time point is taken as the reference.
 ##' @param ... Not used.               
 ##' @param alpha alpha level for approximate confidence intervals.
+##' @export
+##' @author Jonas Knape
 summary.trend = function(object, ciBase = NULL, alpha = 0.05, ...) {
   isTP = which(!object$trendFrame$isGridP)
   timeVar = object$timeVar
@@ -355,7 +358,7 @@ print.summary.trend = function(x, ..., digits = 2) {
     cat("Trend estimates:\n\n")
   else
     cat("Index estimates:\n\n")
-  print(x$estimates, ..., digits = digits, row.names = FALSE, )
+  print(x$estimates, ..., digits = digits, row.names = FALSE)
   invisible(x)
 }
 

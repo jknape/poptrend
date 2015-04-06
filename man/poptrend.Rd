@@ -4,7 +4,7 @@
 \name{poptrend}
 \alias{poptrend}
 \alias{poptrend-package}
-\title{Analyze population trends obtained from survey count data.}
+\title{Analyze population trends in survey count data.}
 \description{
 Provides functions for fitting and analysing trend models of data obtained
 from point count surveys.
