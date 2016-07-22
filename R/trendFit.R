@@ -1,6 +1,6 @@
-##' The function estimates a trend from point count survey data.
+##' The function estimates a trend from count survey data.
 ##' 
-##' The function estimates smooth or loglinear population trends, or indexes from simple design point count survey data. 
+##' The function estimates smooth or loglinear population trends, or indexes from simple design count survey data. 
 ##' It is essentially a wrapper around a call to \code{\link[mgcv]{gam}}, processing its output using \code{\link[mgcv]{predict.gam}}
 ##' to produce a trend estimate.
 ##' For smooth trends, cubic regression splines for the temporal variable are set up by the term \code{s(var, k = k, fx = fx , bs = "cr")}
@@ -35,7 +35,7 @@
 ##' data = simTrend(15, 25)
 ##' ## Fit a smooth trend with fixed site effects, random time effects,
 ##' ## and automatic selection of degrees of freedom
-##' trFit = fitTrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
+##' trFit = ptrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
 ##' ## Check the model fit
 ##' checkFit(trFit)
 ##' ## Plot the trend
@@ -46,7 +46,7 @@
 ##' 
 ##' ## Fit a loglinear trend model with random site effects and random time effects 
 ##' ## to the same data set.
-##' trLin = fitTrend(count ~ trend(year, tempRE = TRUE, type = "loglinear") +
+##' trLin = ptrend(count ~ trend(year, tempRE = TRUE, type = "loglinear") +
 ##'                  s(site, bs = "re"), data = data)
 ##' plot(trLin)
 ##' summary(trLin)
@@ -55,15 +55,15 @@
 ##' ## as a smooth effect.
 ##' # Simulate mock covariate unrelated to data.
 ##' cov = rnorm(nrow(data))
-##' trInd = fitTrend(count ~ trend(year, type = "index") + site + s(cov), data = data)
+##' trInd = ptrend(count ~ trend(year, type = "index") + site + s(cov), data = data)
 ##' plot(trInd)
 ##' summary(trInd)
 ##' @export
 ##' @author Jonas Knape
-fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, nBoot = 500, bootType = "hessian", gamModel = TRUE, ...) {
+ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, nBoot = 500, bootType = "hessian", gamModel = TRUE, ...) {
+  call = match.call()
   if (!inherits(formula, "formula"))
     stop("Argument formula needs to be an object of class formula.")
-  tf = interpret.trendF(formula)
   if (is.character(family)) 
     family <- eval(parse(text = family))
   if (is.function(family)) 
@@ -73,9 +73,10 @@ fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500
   if(family$link != "log") {
     stop("Only log links allowed.")
   }
-  
+  tf = interpret.trendF(formula)
   timeVar = deparse(tf$tVar, width.cutoff = 500)
   tPoints = unique(eval(as.name(tf$predName), data, environment(formula)))
+  tPoints = tPoints[!is.na(tPoints)]
   tVarOut = eval(tf$tVar, data, environment(formula))
   if (tf$type %in% c("smooth", "loglinear")) {
     if(!is.numeric(tVarOut) | !is.numeric(tPoints))
@@ -85,10 +86,10 @@ fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500
   if(tf$tempRE | tf$type == "index") {
     timeVarFac = paste0(tf$predName, tf$tVarExt)
     data[[timeVarFac]] = factor(tVarOut)
+    contrasts(data[[timeVarFac]]) = contr.treatment(nlevels(data[[timeVarFac]]))
   } else {
     timeVarFac = NULL
   }
-  gamFit = mgcv::gam(formula = tf$formula, data =  data, family = family, ...) 
   
   if (tf$type == "index") {
     trendGrid =tPoints
@@ -110,6 +111,8 @@ fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500
   trendFrame$isGridP = c(rep(FALSE, length(tPoints)), rep(TRUE, nGrid[1]))[ix]
   trendFrame[[deparse(tf$tVar)]] = eval(tf$tVar, trendFrame)
   
+  gamFit = mgcv::gam(formula = tf$formula, data = data, family = family, ...) 
+  
   if (tf$tempRE | tf$type == "index") {
     tLevs =  levels(model.frame(gamFit)[[timeVarFac]])
     trendFrame[[timeVarFac]] = factor(sapply(trendFrame[[timeVar]], 
@@ -117,12 +120,15 @@ fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500
                                              levs = tLevs), levels = tLevs)
   }
   mf = get_all_vars(gamFit, data)
-  mf = mf[-which(colnames(mf) %in% c(tf$response, tf$predName, timeVarFac))]
+  predFNames = attr(terms(gamFit$pred.formula), "term.labels")
+  mf = mf[which(colnames(mf) %in% setdiff(predFNames, c(tf$response, tf$predName, timeVarFac)))]
+  
   for (i in seqP(1, ncol(mf))) {
     cname = colnames(mf)[i]
     if(is.numeric(mf[[cname]]))
       trendFrame[[cname]] = mean(mf[[i]], na.rm = TRUE) # dfhead[, i][1]
     else {
+      #browser()
       trendFrame[[cname]] = mf[[i]][which(!is.na(mf[[i]]))[1]]
     }
   }
@@ -175,7 +181,7 @@ interpret.trendF = function(formula) {
   if (length(tind1) > 1)
     stop("Only one trend term allowed in formula.")
   tCall = attr(tf, "variables")[[tind1 + 1]]
-  tind2 = grep(deparse(tCall, width.cutoff = 500), colnames(attr(tf, "factor")), fixed = TRUE)
+  #tind2 = grep(deparse(tCall, width.cutoff = 500), attr(tf, "term.labels"), fixed = TRUE)
   #tf = drop.terms(tf, dropx = tind2, keep.response = TRUE)
   trval = eval(tCall)
   if (trval$type != "index") {
@@ -189,11 +195,11 @@ interpret.trendF = function(formula) {
   #update.formula(tf, newF)
 }
 
-##' The function is used to set up the trend component used in fitTrend formulas.
+##' The function is used to set up the trend component used in ptrend formulas.
 ##'
-##' The function extracts information about the trend component of a formula supplied to fitTrend. 
+##' The function extracts information about the trend component of a formula supplied to ptrend. 
 ##' It returns a list containing variable names, information, and \code{\link[mgcv]{s}} components as strings used in subsequent calls to gam.
-##' @title trend
+##' @title Define a trend component.
 ##' @param var A numeric time variable over which a trend or index will be computed.
 ##' @param tempRE If TRUE, this will set up random time effects. The random effects will be constructed by converting the
 ##'        var argument to a factor. Note that this yields a random effect level for each unique value in var.
@@ -212,7 +218,7 @@ interpret.trendF = function(formula) {
 ##' data = simTrend(15, 25)
 ##' ## Fit a smooth trend with fixed site effects, but no random time effects,
 ##' ## and fixed degrees of freedom
-##' trFit = fitTrend(count ~ trend(year, tempRE = FALSE, k =  8, fx = FALSE, type = "smooth") +
+##' trFit = ptrend(count ~ trend(year, tempRE = FALSE, k =  8, fx = FALSE, type = "smooth") +
 ##'                  site, data = data)
 ##' plot(trFit)
 trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FALSE) {
@@ -276,7 +282,7 @@ convertTimeToFactor = function(times, fac) {
 
 ##' Draws bootstrap samples using the estimated variance matrix of the fitted gam model.
 ##' 
-##' This function is used by \link{fitTrend} and would typically not be called directly.
+##' This function is used by \link{ptrend} and would typically not be called directly.
 ##' Bootstrap samples are drawn using the estimated coeffients and covariance matrix \link[mgcv]{vcov.gam} 
 ##' of the fitted gam model. The default values of \link[mgcv]{vcov.gam} which gives the Bayesian posterior
 ##' covariance matrix.
@@ -317,17 +323,12 @@ hessBootstrap = function(trend, nBoot = 500) {
   chvc = t(chol(vc))
   bdt = NULL
   bdtFac = NULL
-  ## NEW
   cfn = cf + chvc %*% matrix(rnorm(length(cf) * nBoot), ncol = nBoot, nrow = length(cf))
   if (trend$trendType != "index")
     bdt = cbind(bdt, exp(X[, seqP(1,length(tCol)), drop = FALSE] %*% cfn[seqP(1, length(tCol)), , drop = FALSE]))
-  #for (i in 1:nBoot) {
-  # cfn = cf + chvc %*% rnorm(length(cf))
-  #  bdt = cbind(bdt, exp(X[, 1:length(tCol), drop = FALSE] %*% cfn[1:length(tCol), drop = FALSE]))
   if (trend$timeRE | trend$trendType == "index") {
     bdtFac = cbind(bdtFac, exp(X[, seqP(length(tCol) + 1, length(tCol) + length(tFacCol)), drop = FALSE] %*% 
                                  cfn[seqP(length(tCol) + 1, length(tCol) + length(tFacCol)), , drop = FALSE]))
-    #}
   }
   trend$bootTrend = cbind(trend$bootTrend, bdt)
   trend$bootResid = cbind(trend$bootResid, bdtFac)
@@ -338,3 +339,6 @@ seqP = function(from, to) {
   if (to >= from) return(from:to)
   return(integer(0))
 }
+
+
+

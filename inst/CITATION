@@ -1,0 +1,10 @@
+bibentry(bibtype = "Article", 
+         title = "Decomposing trends in Swedish bird populations using generalized additive mixed models", 
+         author = person("Jonas", "Knape"), 
+         journal = "Journal of Applied Ecology", 
+         year = "2016",
+         volume = "NA",
+         pages = "NA",
+         url = "http://dx.doi.org/10.1111/1365-2664.12720",
+         doi = "10.1111/1365-2664.12720"
+         )
