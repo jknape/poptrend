@@ -1,23 +1,24 @@
 ##' Simulate population survey data.
 ##'
 ##' Simulates count survey data with a non-linear trend, and site and temporal random effects. 
-##' The logistic function is used to create a trend the reduces the population size to half over
-##' the time period . The mean of the counts at the start of the 
+##' The logistic function is used to create a trend the reduces the expected population size to half 
+##' its initial value over the time period.
 ##'
 ##' @param nyear The number of years in the simulated survey.
 ##' @param nsite The number of sites in the simulated survey
 ##' @param mu The expected mean of the counts at the start of the survey.
-##' @param timeSD Standard deviation of annual mean deviation from the trend.
+##' @param timeSD Standard deviation (at log-scale) of annual mean deviation from the trend.
+##' @param siteSD Standard deviation (at log-scale) of simulated among site variation.
 ##' @return A data frame containing simulated data.
 ##' @export
 ##' @author Jonas Knape
-simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1){
+simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
   if (mu <= 0)
     stop("mu must be positive")
   nyear = nyear
   nsite = nsite
   yeareff = log(.5 + .5*plogis(20 * (nyear/2 - 1:nyear) / nyear)) + timeSD * rnorm(nyear)
-  siteeff =  .3 * rnorm(nsite)
+  siteeff =  siteSD * rnorm(nsite)
   data = data.frame(count = NA, year = rep(1:nyear, nsite), site = factor(rep(paste0("site", 1:nsite), each = nyear)))
   data$count = rpois(nyear*nsite, lambda  = exp(log(mu) + yeareff[data$year] + siteeff[rep( 1:nsite, each = nyear)]))
   data
@@ -344,7 +345,6 @@ summary.trend = function(object, ciBase = NULL, alpha = 0.05, ...) {
              trendType = object$trendType, estimates = df)
   class(out) = "summary.trend"
   out
-  #mgcv::summary.gam(trend$gam)
 }
 
 #' @export

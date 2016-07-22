@@ -1,10 +1,17 @@
 Package: poptrend
-Title: Fits smooth trends to population survey data.
+Title: Estimate smooth trends from population count survey data
 Version: 0.1
 Maintainer: Jonas Knape  <jonas.knape@slu.se>
 Author: Jonas Knape
-Description: This package provides functions to estimate smooth population trends from point-count survey data.
-Depends: R (>= 3.1.2)
+Description: This package provides functions to estimate smooth population
+    trends from count survey data.
+Depends:
+    R (>= 3.1.2)
 License: GPL-3
 LazyData: true
-Imports: mgcv (>= 1.7.0)
+Imports:
+    mgcv (>= 1.7.0),
+    stats,
+    graphics
+RoxygenNote: 5.0.1
+
