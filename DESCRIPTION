@@ -1,10 +1,9 @@
 Package: poptrend
-Title: Estimate smooth trends from population count survey data
+Title: Estimate Smooth Trends from Population Count Survey Data
 Version: 0.1
 Maintainer: Jonas Knape  <jonas.knape@slu.se>
 Author: Jonas Knape
-Description: This package provides functions to estimate smooth population
-    trends from count survey data.
+Description: Functions to estimate and plot smooth population trends from animal or plant count survey data.
 Depends:
     R (>= 3.1.2)
 License: GPL-3

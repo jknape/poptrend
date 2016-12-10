@@ -75,22 +75,23 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
   }
   tf = interpret.trendF(formula)
   timeVar = deparse(tf$tVar, width.cutoff = 500)
-  tPoints = unique(eval(as.name(tf$predName), data, environment(formula)))
+  if (!identical(timeVar, tf$predName)) {
+    stop(paste("Trend variable", timeVar, "must simple, expressions are not implemented."))
+  }
+#  tPoints = unique(eval(as.name(tf$predName), data, environment(formula)))
+  tPoints = unique(eval(tf$tVar, data, environment(formula)))
   tPoints = tPoints[!is.na(tPoints)]
   tVarOut = eval(tf$tVar, data, environment(formula))
   if (tf$type %in% c("smooth", "loglinear")) {
     if(!is.numeric(tVarOut) | !is.numeric(tPoints))
       stop(paste("Trend variable needs to be numeric."))
   }  
-  
+  timeVarFac = NULL
   if(tf$tempRE | tf$type == "index") {
     timeVarFac = paste0(tf$predName, tf$tVarExt)
     data[[timeVarFac]] = factor(tVarOut)
     contrasts(data[[timeVarFac]]) = contr.treatment(nlevels(data[[timeVarFac]]))
-  } else {
-    timeVarFac = NULL
   }
-  
   if (tf$type == "index") {
     trendGrid =tPoints
   } else {
@@ -231,7 +232,7 @@ trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FAL
   if (type == "smooth")
     gTrend = paste0("s(", deparse(tVar),", k = ", k, ", fx = ", fx, ", bs = \"cr\")")
   if (type == "loglinear") {
-    tVar = substitute(I(tVar)) 
+#    tVar = substitute(I(tVar)) 
     gTrend = deparse(tVar)
   }
   if (type == "index") {
