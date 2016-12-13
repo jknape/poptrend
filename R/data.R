@@ -10,16 +10,16 @@
 #'   \item year Year of the survey.
 #'   \item observerAge Age of the observer.
 #'   \item day Day of season.
-#'   \item firstSurvey A binary variabke which is 1 
+#'   \item firstSurvey A binary variable which is 1 
 #'         if the route was surveyed for the first time 
 #'         by the observer in that year, and 0 otherwise.
 #'   \item latitude Latitude of the transect.
 #'   \item lineCov The percentage of the transect that was surveyed.
 #' }
-#' @source http://www.fageltaxering.lu.se/english
+#' @source \url{http://www.fageltaxering.lu.se/english}
 "goldcrest"
 
-#' Data for freenfinch from the Swedish Bird Survey.
+#' Data for greenfinch from the Swedish Bird Survey.
 #'
 #' Transect count survey data for greenfinch from the Swedish Bird Survey from 1998 to 2012.
 #'
@@ -31,11 +31,11 @@
 #'   \item year Year of the survey.
 #'   \item observerAge Age of the observer.
 #'   \item day Day of season.
-#'   \item firstSurvey A binary variabke which is 1 
+#'   \item firstSurvey A binary variable which is 1 
 #'         if the route was surveyed for the first time 
 #'         by the observer in that year, and 0 otherwise.
 #'   \item latitude Latitude of the transect.
 #'   \item lineCov The percentage of the transect that was surveyed.
 #' }
-#' @source http://www.fageltaxering.lu.se/english
+#' @source \url{http://www.fageltaxering.lu.se/english}
 "greenfinch"

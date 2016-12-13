@@ -23,7 +23,7 @@ Computes the estimated percentual change in the population between two given tim
 and an approximate confidence interval for the change.
 }
 \details{
-The function computes the estimated change between two choosen time points. 
+The function computes the estimated change between two chosen time points. 
 When random effects are present, the change is computed for the underlying linear or
 smooth trend term. 
 For index models, the change is estimated from the difference between indices.

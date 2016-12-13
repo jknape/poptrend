@@ -11,14 +11,14 @@
   \item year Year of the survey.
   \item observerAge Age of the observer.
   \item day Day of season.
-  \item firstSurvey A binary variabke which is 1 
+  \item firstSurvey A binary variable which is 1 
         if the route was surveyed for the first time 
         by the observer in that year, and 0 otherwise.
   \item latitude Latitude of the transect.
   \item lineCov The percentage of the transect that was surveyed.
 }}
 \source{
-http://www.fageltaxering.lu.se/english
+\url{http://www.fageltaxering.lu.se/english}
 }
 \usage{
 goldcrest

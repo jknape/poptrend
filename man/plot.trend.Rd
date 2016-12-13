@@ -24,7 +24,7 @@ By default, the first time point is taken as the reference.}
 
 \item{trendCol}{The color of the trend line.}
 
-\item{lineCol}{The color of bootstraped trend lines, if plotted.}
+\item{lineCol}{The color of bootstrapped trend lines, if plotted.}
 
 \item{shadeCol}{The color of the confidence region.}
 

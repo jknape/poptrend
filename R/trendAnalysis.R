@@ -48,7 +48,7 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##' @param ylab The label of the y-axis.
 ##' @param alpha The alpha level of confidence intervals.
 ##' @param trendCol The color of the trend line.
-##' @param lineCol The color of bootstraped trend lines, if plotted.
+##' @param lineCol The color of bootstrapped trend lines, if plotted.
 ##' @param shadeCol The color of the confidence region.
 ##' @param incCol The color of regions where the first or second derivative is significantly increasing.
 ##' @param decCol The color of regions where the first or second derivative is significantly decreasing.
@@ -182,7 +182,7 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
 ##' Computes the estimated percentual change in the population between two given time points, 
 ##' and an approximate confidence interval for the change.
 ##'
-##' The function computes the estimated change between two choosen time points. 
+##' The function computes the estimated change between two chosen time points. 
 ##' When random effects are present, the change is computed for the underlying linear or
 ##' smooth trend term. 
 ##' For index models, the change is estimated from the difference between indices.

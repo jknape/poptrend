@@ -284,16 +284,16 @@ convertTimeToFactor = function(times, fac) {
 ##' Draws bootstrap samples using the estimated variance matrix of the fitted gam model.
 ##' 
 ##' This function is used by \link{ptrend} and would typically not be called directly.
-##' Bootstrap samples are drawn using the estimated coeffients and covariance matrix \link[mgcv]{vcov.gam} 
+##' Bootstrap samples are drawn using the estimated coefficients and covariance matrix \link[mgcv]{vcov.gam} 
 ##' of the fitted gam model. The default values of \link[mgcv]{vcov.gam} which gives the Bayesian posterior
 ##' covariance matrix.
 ##' 
-##' Bootstraped samples computed in this way do not account for any uncertainty in the selection of degrees
+##' Bootstrapped samples computed in this way do not account for any uncertainty in the selection of degrees
 ##' of freedom.
 ##' @title Compute bootstrap confidence intervals based on sampling from the variance-covariance matrix.
 ##' @param trend An object of class trend.
 ##' @param nBoot The number of bootstrap samples to draw.
-##' @return A trend object with the bootstraped trend estimates appended.
+##' @return A trend object with the bootstrapped trend estimates appended.
 ##' @export
 ##' @author Jonas Knape
 hessBootstrap = function(trend, nBoot = 500) {
