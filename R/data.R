@@ -16,6 +16,7 @@
 #'   \item latitude Latitude of the transect.
 #'   \item lineCov The percentage of the transect that was surveyed.
 #' }
+#' @source http://www.fageltaxering.lu.se/english
 "goldcrest"
 
 #' Data for freenfinch from the Swedish Bird Survey.
@@ -36,4 +37,5 @@
 #'   \item latitude Latitude of the transect.
 #'   \item lineCov The percentage of the transect that was surveyed.
 #' }
+#' @source http://www.fageltaxering.lu.se/english
 "greenfinch"
