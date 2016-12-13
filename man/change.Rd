@@ -28,12 +28,12 @@ When random effects are present, the change is computed for the underlying linea
 smooth trend term. 
 For index models, the change is estimated from the difference between indices.
 Changes can only be computed between time points that were included in the \code{trendGrid}
-argument to \link{fitTrend}, if the two time points are not included the nearest points in the grid are chosen.
+argument to \link{ptrend}, if the two time points are not included the nearest points in the grid are chosen.
 
 Confidence intervals are computed using quantiles of the bootstrapped trends.
 }
 \note{
-If \code{start} or \code{end} are not contained in the \code{trendgrid} argument of the \code{\link{fitTrend}} function, 
+If \code{start} or \code{end} are not contained in the \code{trendgrid} argument of the \code{\link{ptrend}} function, 
 the change is computed between the values in the grid that are closest to these points.
 }
 \examples{
@@ -41,7 +41,7 @@ the change is computed between the values in the grid that are closest to these 
 data = simTrend(30, 10)
 ## Fit a smooth trend with fixed site effects, random time effects,
 ## and automatic selection of degrees of freedom
-trFit = fitTrend(count ~ trend(year, type = "smooth") + site, data = data)
+trFit = ptrend(count ~ trend(year, type = "smooth") + site, data = data)
 ## Check the estimated percent change from year 2 to 20
 change(trFit, 10, 20)
 }

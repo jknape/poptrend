@@ -13,7 +13,7 @@
 \item{x}{A fitted object of class trend.}
 
 \item{ciBase}{A time point or function used to compute the baseline of the trend. 
-If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{fitTrend}}
+If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
 closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
 By default, the first time point is taken as the reference.}

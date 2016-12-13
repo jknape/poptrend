@@ -4,7 +4,7 @@
 \name{poptrend}
 \alias{poptrend}
 \alias{poptrend-package}
-\title{Analyze population trends in survey count data.}
+\title{Analyze population trends from survey count data.}
 \description{
 The package provides functions for fitting and analysing trend models of data obtained 
 from population count surveys.
@@ -19,6 +19,6 @@ Background for the package is given in Knape (2016).
 }
 \references{
 Knape, J. 2016. Decomposing trends in Swedish bird populations using generalized additive mixed models. 
-            Journal of Applied Ecology, in press. DOI:10.1111/1365-2664.12720.
+            Journal of Applied Ecology, 53:. DOI:10.1111/1365-2664.12720.
 }
 

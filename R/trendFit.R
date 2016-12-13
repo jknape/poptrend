@@ -35,7 +35,7 @@
 ##' data = simTrend(15, 25)
 ##' ## Fit a smooth trend with fixed site effects, random time effects,
 ##' ## and automatic selection of degrees of freedom
-##' trFit = fitTrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
+##' trFit = ptrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
 ##' ## Check the model fit
 ##' checkFit(trFit)
 ##' ## Plot the trend
@@ -46,7 +46,7 @@
 ##' 
 ##' ## Fit a loglinear trend model with random site effects and random time effects 
 ##' ## to the same data set.
-##' trLin = fitTrend(count ~ trend(year, tempRE = TRUE, type = "loglinear") +
+##' trLin = ptrend(count ~ trend(year, tempRE = TRUE, type = "loglinear") +
 ##'                  s(site, bs = "re"), data = data)
 ##' plot(trLin)
 ##' summary(trLin)
@@ -55,12 +55,12 @@
 ##' ## as a smooth effect.
 ##' # Simulate mock covariate unrelated to data.
 ##' cov = rnorm(nrow(data))
-##' trInd = fitTrend(count ~ trend(year, type = "index") + site + s(cov), data = data)
+##' trInd = ptrend(count ~ trend(year, type = "index") + site + s(cov), data = data)
 ##' plot(trInd)
 ##' summary(trInd)
 ##' @export
 ##' @author Jonas Knape
-fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, nBoot = 500, bootType = "hessian", gamModel = TRUE, ...) {
+ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, nBoot = 500, bootType = "hessian", gamModel = TRUE, ...) {
   call = match.call()
   if (!inherits(formula, "formula"))
     stop("Argument formula needs to be an object of class formula.")
@@ -75,22 +75,23 @@ fitTrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500
   }
   tf = interpret.trendF(formula)
   timeVar = deparse(tf$tVar, width.cutoff = 500)
-  tPoints = unique(eval(as.name(tf$predName), data, environment(formula)))
+  if (!identical(timeVar, tf$predName)) {
+    stop(paste("Trend variable", timeVar, "must simple, expressions are not implemented."))
+  }
+#  tPoints = unique(eval(as.name(tf$predName), data, environment(formula)))
+  tPoints = unique(eval(tf$tVar, data, environment(formula)))
   tPoints = tPoints[!is.na(tPoints)]
   tVarOut = eval(tf$tVar, data, environment(formula))
   if (tf$type %in% c("smooth", "loglinear")) {
     if(!is.numeric(tVarOut) | !is.numeric(tPoints))
       stop(paste("Trend variable needs to be numeric."))
   }  
-  
+  timeVarFac = NULL
   if(tf$tempRE | tf$type == "index") {
     timeVarFac = paste0(tf$predName, tf$tVarExt)
     data[[timeVarFac]] = factor(tVarOut)
     contrasts(data[[timeVarFac]]) = contr.treatment(nlevels(data[[timeVarFac]]))
-  } else {
-    timeVarFac = NULL
   }
-  
   if (tf$type == "index") {
     trendGrid =tPoints
   } else {
@@ -195,9 +196,9 @@ interpret.trendF = function(formula) {
   #update.formula(tf, newF)
 }
 
-##' The function is used to set up the trend component used in fitTrend formulas.
+##' The function is used to set up the trend component used in ptrend formulas.
 ##'
-##' The function extracts information about the trend component of a formula supplied to fitTrend. 
+##' The function extracts information about the trend component of a formula supplied to ptrend. 
 ##' It returns a list containing variable names, information, and \code{\link[mgcv]{s}} components as strings used in subsequent calls to gam.
 ##' @title Define a trend component.
 ##' @param var A numeric time variable over which a trend or index will be computed.
@@ -218,7 +219,7 @@ interpret.trendF = function(formula) {
 ##' data = simTrend(15, 25)
 ##' ## Fit a smooth trend with fixed site effects, but no random time effects,
 ##' ## and fixed degrees of freedom
-##' trFit = fitTrend(count ~ trend(year, tempRE = FALSE, k =  8, fx = FALSE, type = "smooth") +
+##' trFit = ptrend(count ~ trend(year, tempRE = FALSE, k =  8, fx = FALSE, type = "smooth") +
 ##'                  site, data = data)
 ##' plot(trFit)
 trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FALSE) {
@@ -231,7 +232,7 @@ trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FAL
   if (type == "smooth")
     gTrend = paste0("s(", deparse(tVar),", k = ", k, ", fx = ", fx, ", bs = \"cr\")")
   if (type == "loglinear") {
-    tVar = substitute(I(tVar)) 
+#    tVar = substitute(I(tVar)) 
     gTrend = deparse(tVar)
   }
   if (type == "index") {
@@ -282,7 +283,7 @@ convertTimeToFactor = function(times, fac) {
 
 ##' Draws bootstrap samples using the estimated variance matrix of the fitted gam model.
 ##' 
-##' This function is used by \link{fitTrend} and would typically not be called directly.
+##' This function is used by \link{ptrend} and would typically not be called directly.
 ##' Bootstrap samples are drawn using the estimated coeffients and covariance matrix \link[mgcv]{vcov.gam} 
 ##' of the fitted gam model. The default values of \link[mgcv]{vcov.gam} which gives the Bayesian posterior
 ##' covariance matrix.

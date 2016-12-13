@@ -1,4 +1,4 @@
-#' Analyze population trends in survey count data.
+#' Analyze population trends from survey count data.
 #'
 #' The package provides functions for fitting and analysing trend models of data obtained 
 #' from population count surveys.
@@ -13,7 +13,7 @@
 #' @name poptrend
 #' @docType package
 #' @references Knape, J. 2016. Decomposing trends in Swedish bird populations using generalized additive mixed models. 
-#'             Journal of Applied Ecology, in press. DOI:10.1111/1365-2664.12720.
+#'             Journal of Applied Ecology, 53:. DOI:10.1111/1365-2664.12720.
 #' @import stats mgcv
 #' @importFrom graphics grid lines par plot points polygon segments
 #' @importFrom grDevices adjustcolor

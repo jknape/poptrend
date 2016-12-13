@@ -41,7 +41,7 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##' There is an additional option of plotting each of the bootstrapped trends.
 ##' @param x A fitted object of class trend.
 ##' @param ciBase A time point or function used to compute the baseline of the trend. 
-##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{fitTrend}}
+##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
 ##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 ##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
 ##'               By default, the first time point is taken as the reference.
@@ -187,7 +187,7 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
 ##' smooth trend term. 
 ##' For index models, the change is estimated from the difference between indices.
 ##' Changes can only be computed between time points that were included in the \code{trendGrid}
-##' argument to \link{fitTrend}, if the two time points are not included the nearest points in the grid are chosen.
+##' argument to \link{ptrend}, if the two time points are not included the nearest points in the grid are chosen.
 ##' 
 ##' Confidence intervals are computed using quantiles of the bootstrapped trends.
 ##'
@@ -197,7 +197,7 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
 ##' @param end End time for the comparison.
 ##' @param alpha alpha-level for approximate confidence interval.
 ##' @return A list containing the estimated change, and start and end points.
-##' @note If \code{start} or \code{end} are not contained in the \code{trendgrid} argument of the \code{\link{fitTrend}} function, 
+##' @note If \code{start} or \code{end} are not contained in the \code{trendgrid} argument of the \code{\link{ptrend}} function, 
 ##' the change is computed between the values in the grid that are closest to these points.
 ##' @export
 ##' @author Jonas Knape
@@ -206,7 +206,7 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
 ##' data = simTrend(30, 10)
 ##' ## Fit a smooth trend with fixed site effects, random time effects,
 ##' ## and automatic selection of degrees of freedom
-##' trFit = fitTrend(count ~ trend(year, type = "smooth") + site, data = data)
+##' trFit = ptrend(count ~ trend(year, type = "smooth") + site, data = data)
 ##' ## Check the estimated percent change from year 2 to 20
 ##' change(trFit, 10, 20)
 change = function(trend, start, end, alpha = .05) {
@@ -280,9 +280,9 @@ print.trend = function(x, ...) {
 ##' If bootstrap samples are available, bootstrap confidence intervals for the trend 
 ##' or index values are also computed.
 ##' @title Summary of trend estimates
-##' @param object A trend object returned by \code{\link{fitTrend}}.
+##' @param object A trend object returned by \code{\link{ptrend}}.
 ##' @param ciBase A time point or function used to compute the baseline of the trend. 
-##'               If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{fitTrend}}
+##'               If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{ptrend}}
 ##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 ##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
 ##'               By default, the first time point is taken as the reference.
@@ -375,7 +375,7 @@ print.summary.trend = function(x, ..., digits = 2) {
 ##' @author Jonas Knape
 checkFit = function(trend, residuals = TRUE, ...) {
   if(is.null(trend$gam))
-    stop("gam fit not available. Try setting argument gamModel to TRUE in call to fitTrend.")
+    stop("gam fit not available. Try setting argument gamModel to TRUE in call to ptrend.")
   mgcv::plot.gam(trend$gam, residuals = residuals, ...)
   mgcv::gam.check(trend$gam)
 }
