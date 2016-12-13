@@ -3,13 +3,23 @@ poptrend is a package for estimating simple population trends from count survey 
 
 ## Installation
 
-To install the package, first install the devtools package:
+#### CRAN version
+
+The main version of [poptrend](https://cran.r-project.org/package=poptrend) is available from CRAN  and can be installed by running
+
+```R 
+install.packages("poptrend")
+```
+
+#### Development version
+
+Alternatively, the most recent development version can be installed directly from Github. To do so, first install the devtools package:
 
 ```R
 install.packages("devtools")
 ```
 
-The development version of the poptrend package can then be installed through:
+Then run:
 
 ```R
 library(devtools)
