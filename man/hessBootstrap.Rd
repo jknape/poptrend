@@ -29,4 +29,3 @@ of freedom.
 \author{
 Jonas Knape
 }
-

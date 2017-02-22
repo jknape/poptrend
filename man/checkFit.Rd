@@ -20,10 +20,9 @@ Produces various goodness of fit plots and diagnostic measures.
 The function simply calls \link[mgcv]{plot.gam} and \link[mgcv]{gam.check} on the 
 underlying gam model for checking goodness of fit.
 }
-\author{
-Jonas Knape
-}
 \seealso{
 \code{\link[mgcv]{plot.gam}}, \code{\link[mgcv]{gam.check}}
 }
-
+\author{
+Jonas Knape
+}

@@ -48,4 +48,3 @@ change(trFit, 10, 20)
 \author{
 Jonas Knape
 }
-

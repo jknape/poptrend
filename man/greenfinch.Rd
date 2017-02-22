@@ -27,4 +27,3 @@ greenfinch
 Transect count survey data for greenfinch from the Swedish Bird Survey from 1998 to 2012.
 }
 \keyword{datasets}
-

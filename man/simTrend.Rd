@@ -28,4 +28,3 @@ its initial value over the time period.
 \author{
 Jonas Knape
 }
-

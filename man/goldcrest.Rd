@@ -27,4 +27,3 @@ goldcrest
 Transect count survey data for goldcrest from the Swedish Bird Survey from 1998 to 2012.
 }
 \keyword{datasets}
-

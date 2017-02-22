@@ -21,4 +21,3 @@ Background for the package is given in Knape (2016).
 Knape, J. 2016. Decomposing trends in Swedish bird populations using generalized additive mixed models. 
             Journal of Applied Ecology, 53:1852-1861. DOI:10.1111/1365-2664.12720.
 }
-

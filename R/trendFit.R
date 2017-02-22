@@ -76,7 +76,7 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
   tf = interpret.trendF(formula)
   timeVar = deparse(tf$tVar, width.cutoff = 500)
   if (!identical(timeVar, tf$predName)) {
-    stop(paste("Trend variable", timeVar, "must simple, expressions are not implemented."))
+    stop(paste("Trend variable", timeVar, "must be simple, expressions are not implemented."))
   }
 #  tPoints = unique(eval(as.name(tf$predName), data, environment(formula)))
   tPoints = unique(eval(tf$tVar, data, environment(formula)))
@@ -325,9 +325,14 @@ hessBootstrap = function(trend, nBoot = 500) {
   bdt = NULL
   bdtFac = NULL
   cfn = cf + chvc %*% matrix(rnorm(length(cf) * nBoot), ncol = nBoot, nrow = length(cf))
-  if (trend$trendType != "index")
+  if (trend$trendType != "index") {
     bdt = cbind(bdt, exp(X[, seqP(1,length(tCol)), drop = FALSE] %*% cfn[seqP(1, length(tCol)), , drop = FALSE]))
-  if (trend$timeRE | trend$trendType == "index") {
+  }  else { # Standardize each simulation to avoid numerical problems. Could also be done for non-index trends. TODO.
+    XC = X[, seqP(length(tCol) + 1, length(tCol) + length(tFacCol)), drop = FALSE] %*% 
+      cfn[seqP(length(tCol) + 1, length(tCol) + length(tFacCol)), , drop = FALSE]
+    bdtFac = cbind(bdtFac, exp(XC-kronecker(rep(1,nrow(XC)), t(colSums(XC)/nrow(XC)))))
+  }
+  if (trend$timeRE) {
     bdtFac = cbind(bdtFac, exp(X[, seqP(length(tCol) + 1, length(tCol) + length(tFacCol)), drop = FALSE] %*% 
                                  cfn[seqP(length(tCol) + 1, length(tCol) + length(tFacCol)), , drop = FALSE]))
   }

@@ -83,4 +83,3 @@ summary(trInd)
 \author{
 Jonas Knape
 }
-

@@ -54,12 +54,14 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##' @param decCol The color of regions where the first or second derivative is significantly decreasing.
 ##' @param plotGrid If true, grid lines are plotted.
 ##' @param plotLines If true, the bootstrapped trends are plotted.
+##' @param ranefCI If true, confidence intervals for random effects are plotted.
+##' @param secDeriv If true, coloured boxes at the bottom of the plot shows segments where the second derivative of the smooth is significantly different from zero.
 ##' @param ... Further arguments passed to \code{\link[graphics]{plot.default}}.
 ##' @export
 ##' @author Jonas Knape
-plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = "black", lineCol = adjustcolor("black", alpha.f = 0.05), 
+plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", trendCol = "black", lineCol = adjustcolor("black", alpha.f = 0.05), 
                       shadeCol = adjustcolor("#0072B2", alpha.f = 0.4), incCol = "#009E73", decCol ="#D55E00",
-                      plotGrid = TRUE, plotLines = FALSE, ...) {
+                      plotGrid = TRUE, plotLines = FALSE, ranefCI = TRUE, secDeriv = TRUE, ...) {
   timeVar = x$timeVar
   isGridP = x$trendFrame$isGridP
   tGrid = x$trendFrame[[timeVar]]
@@ -95,7 +97,7 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
     ciGrad = apply(grad, 1, quantile, probs = c(alpha / 2, 1 - alpha/2)) # Expensive
     pGradInd = which(ciGrad[1, ] > 0)
     nGradInd = which(ciGrad[2, ] < 0)
-    if (x$trendType == "smooth") {
+    if (x$trendType == "smooth" & secDeriv) {
       grad2 = getGradient(x$bootTrend[isGridP, ], order = 2) # Expensive
       ciGrad2 = apply(grad2, 1, quantile, probs = c(alpha / 2, 1 - alpha/2)) # Expensive
       pGrad2Ind = getRuns(which(ciGrad2[1, ] > 0))
@@ -115,7 +117,7 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
     resGrid = as.numeric(levels(x$trendFrame[[timeVarFac]][ind]))
     if (!is.null(x$bootTrend))
       cip = apply(x$bootTrend * x$bootResid, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 1)) # Expensive
-    else if (!is.null(x$bootResid))
+    else if (!is.null(x$bootResid) & ranefCI)
       cip = apply(x$bootResid, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 1)) # Expensive
   }   
   ## Start plotting
@@ -169,8 +171,10 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "trend", trendCol = 
                    col = lineCol)
         }
       }
+      if (ranefCI | x$trendType == "index") { # Plot confidence intervals for random effects or index.
       apply(cbind(resGrid, t(cip[, ind])), 1, 
             function(row) lines(x = c(row[1], row[1]), y = row[2:3], lwd = 1, col = trendCol))
+      }
     }
     if (x$timeRE)
       points(resGrid, trendEst[ind]*x$trendFrame$trendResid[ind] / tDiv , type = "p", pch = 20, col = trendCol)

@@ -37,4 +37,3 @@ or index values are also computed.
 \author{
 Jonas Knape
 }
-

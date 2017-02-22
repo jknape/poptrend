@@ -46,4 +46,3 @@ plot(trFit)
 \author{
 Jonas Knape
 }
-

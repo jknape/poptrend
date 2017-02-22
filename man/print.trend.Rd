@@ -20,4 +20,3 @@ Prints the family, formula and type of trend.
 \author{
 Jonas Knape
 }
-
