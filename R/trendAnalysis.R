@@ -135,10 +135,6 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
     tGrid2 = tGrid[isGridP]
     bymin = par()$usr[3]
     bymax = bymin + .1 * (par()$usr[4] - bymin)
-    if (!is.null(pGrad2Ind))
-      apply(pGrad2Ind, 1, function(row) polygon(x = tGrid2[c(row, rev(row))], y = c(bymin,bymin,bymax,bymax), border = NA, col = adjustcolor(incCol, alpha.f = .3)))
-    if (!is.null(nGrad2Ind))
-      apply(nGrad2Ind, 1, function(row) polygon(x = tGrid2[c(row, rev(row))], y = c(bymin,bymin,bymax,bymax), border = NA, col = adjustcolor(decCol, alpha.f = .3)))
     if (plotLines) {
       for (i in 1:ncol(x$bootTrend)) {
         points(tGrid, x$bootTrend[,i] / bDiv[i], type = "l", 
@@ -237,11 +233,23 @@ change = function(trend, start, end, alpha = .05) {
   invisible(list(percentChange = pc, CI = CI, start = start, end = end))
 }
 
+# Only computes relative magnitude of derivative and assumes regular grid (no 1/h, 1/h^2)
 getGradient = function(bootTrend, order = 1) {
-  if (order == 1)
-    return(apply(bootTrend, 2, function(bt) {diff(bt, lag = 2) / 2}))
-  if (order == 2)
-    return(apply(bootTrend, 2, function(bt) {diff(bt, differences = 2)}))
+  nr = nrow(bootTrend)
+  if (order == 1) {
+    #grad = apply(bootTrend, 2, function(bt) {diff(bt, lag = 2) / 2})
+    #grad = rbind(bootTrend[2,]-bootTrend[1,],grad, bootTrend[nrow(bootTrend),]-bootTrend[nrow(bootTrend)-1,])
+    # Below is faster
+    grad =  (bootTrend[3:nr,] - bootTrend[1:(nr-2),])/2
+    grad = rbind(bootTrend[2,]-bootTrend[1,],grad, bootTrend[nr,]-bootTrend[nr-1,])
+    return(grad)
+  }
+  if (order == 2) {
+    secDeriv = (bootTrend[3:nr,] - 2 *bootTrend[2:(nr-1),] + bootTrend[1:(nr-2),])
+    secDeriv = rbind(bootTrend[3,]-2*bootTrend[2,] + bootTrend[1,], secDeriv, bootTrend[nr,]-2*bootTrend[nr-1,] + bootTrend[nr-2,])
+    #apply(bootTrend, 2, function(bt) {diff(bt, differences = 2)})
+    return(secDeriv)
+  }
 }
 
 getRuns = function(index) {

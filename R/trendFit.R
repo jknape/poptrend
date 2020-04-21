@@ -93,7 +93,7 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
     contrasts(data[[timeVarFac]]) = contr.treatment(nlevels(data[[timeVarFac]]))
   }
   if (tf$type == "index") {
-    trendGrid =tPoints
+    trendGrid = tPoints
   } else {
     if (length(nGrid) == 1) {
       minT = min(tPoints, na.rm = TRUE)
@@ -104,7 +104,7 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
         stop("nGrid[2] larger than nGrid[3]")
       trendGrid = c(tPoints, seq(nGrid[2], nGrid[3], length.out = nGrid[1]))
     } else 
-      stop("trendGrid needs to be of length one or three")
+      stop("nGrid needs to be of length one or three")
   }
   ix = sort.int(trendGrid, index.return = TRUE)$ix
   trendFrame = data.frame(trendGrid[ix])
@@ -144,32 +144,35 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
     tCol = c(grep("(Intercept)", colnames(pred), fixed = TRUE), grep(timeVarFac, colnames(pred), fixed = TRUE))
   }
   if (tf$type != "index") {
-    trendFrame$trend = exp(pred[, tCol, drop = FALSE] %*% coef(gamFit)[tCol, drop = FALSE]) # Assumes log-link!
-    trendFrame$trendResid = rep(NA, nrow(trendFrame))
+    trendFrame$trendRaw = exp(pred[, tCol, drop = FALSE] %*% coef(gamFit)[tCol, drop = FALSE]) # Assumes log-link!
+    trendFrame$trendResidRaw = rep(NA, nrow(trendFrame))
   } else {
-    trendFrame$trend = NA
-    trendFrame$trendResid = exp(pred[, tCol, drop = FALSE] %*% coef(gamFit)[tCol, drop = FALSE])
+    trendFrame$trendRaw = NA
+    trendFrame$trendResidRaw = exp(pred[, tCol, drop = FALSE] %*% coef(gamFit)[tCol, drop = FALSE])
   }
   if(tf$tempRE) {
     tCol = grep(extractGamLabel(timeVarFac, formula(gamFit)), colnames(pred), fixed = TRUE)
-    trendFrame$trendResid = exp(pred[, tCol] %*% coef(gamFit)[tCol])
+    trendFrame$trendResidRaw = exp(pred[, tCol] %*% coef(gamFit)[tCol])
   }
+  trendFrame$trendCILow = NULL
+  trendFrame$trendCIUpp = NULL
+  trendFrame$gradPval = NULL
   out = list(trendFrame = trendFrame,
              formula = formula, family = family, gam = gamFit,
              countVar = tf$response, timeVar = timeVar, timeVarFac = timeVarFac, tPredName = tf$predName, 
              timeRE = tf$tempRE, trendType = tf$type, k = tf$k, fx = tf$fx, bootTrend = NULL, bootResid = NULL, bootType = NULL,
              call = call)
-  class(out) = "trend"
-  if (nBoot > 0) {
-    if (bootType == "hessian") 
-      out = hessBootstrap(out, nBoot)
-    if (bootType == "semi-parametric") 
-      stop("semi-parametric bootstrap method not implemented.")
-    if (bootType == "fewster")
-      stop("Fewster bootstrap method not implemented.")
-  }  
   if (!gamModel)
     out$gam = NULL
+  class(out) = "trend"
+  if (nBoot > 0) { # Does nBoot <= 0 work?
+    if (bootType == "hessian") 
+      out = hessBootstrap(out, nBoot)
+    #if (bootType == "semi-parametric") 
+    #  stop("semi-parametric bootstrap method not implemented.")
+    #if (bootType == "fewster")
+    #  stop("Fewster bootstrap method not implemented.")
+  }  
   out
 }
 
@@ -340,6 +343,64 @@ hessBootstrap = function(trend, nBoot = 500) {
   trend$bootResid = cbind(trend$bootResid, bdtFac)
   trend
 }
+
+
+getTrendCI = function(x, ciBase = NULL, alpha = .05,...) {
+  timeVar = x$timeVar
+  isGridP = x$trendFrame$isGridP
+  tGrid = x$trendFrame[[timeVar]]
+  trendEst = x$trendFrame$trendRaw
+  if (x$trendType == "index")
+    trendEst = x$trendFrame$trendResidRaw
+  if (is.null(ciBase) | is.numeric(ciBase)) {
+    if (is.null(ciBase))
+      bInt = which.min(isGridP)
+    else
+      bInt = which.min(abs(tGrid - ciBase))
+    tDiv = as.numeric(trendEst[bInt])
+    if (!is.null(x$bootTrend))
+      bDiv = x$bootTrend[bInt, ]
+    if (x$trendType == "index" & !is.null(x$bootResid))
+      bDiv = x$bootResid[bInt, ]
+  } else {
+    if(is.function(ciBase)) {
+      tDiv = ciBase(trendEst)
+      if (!is.null(x$bootTrend))
+        bDiv = apply(x$bootTrend, 2, ciBase) 
+      if (x$trendType == "index" & !is.null(x$bootResid))
+        bDiv = apply(x$bootResid, 2, ciBase)
+    } else {
+      tDiv = 1
+      if (!is.null(trend$bootTrend))
+        bDiv = rep(1, length(x$bootTrend))
+    }
+  }
+  x$trendFrame$trendEst = trendEst/tDiv
+  ci = NULL
+  if (!is.null(x$bootTrend)) {
+    grad = getGradient(x$bootTrend[isGridP, ], order = 1)
+    x$trendFrame$gradPval[isGridP] = rowMeans(grad > 0)
+    
+    #ci = data.frame(t(apply(x$bootTrend, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 7)))) # Expensive
+    ci = t(colQuantilesRebase(t(x$bootTrend), probs = c(alpha/2, 1-alpha/2), bDiv))
+    x$trendFrame$trendCILow = ci[[1]]
+    x$trendFrame$trendCIUpp = ci[[2]]
+    
+  }
+  cip = NULL
+  if (x$timeRE | x$trendType == "index") {
+    if (!is.null(x$bootTrend))
+      cip = t(colQuantilesRebase(t(x$bootTrend * x$bootResid), probs = c(alpha/2, 1-alpha/2), bDiv))
+      #cip = apply(x$bootTrend * x$bootResid, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 7)) # Expensive
+    else if (!is.null(x$bootResid))
+      cip = apply(x$bootResid, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 7)) # Expensive
+  }   
+  cip = matrix(cip, nrow = 2)
+  x$trendFrame$trendReCILow = cip[1,]
+  x$trendFrame$trendReCIUpp = cip[2,]
+  x
+}
+
 
 seqP = function(from, to) {
   if (to >= from) return(from:to)
