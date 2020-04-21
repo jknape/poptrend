@@ -28,6 +28,8 @@
 ##'                 covariance matrix of the parameters (see \code{\link[mgcv]{vcov.gam}}).
 ##' @param gamModel If true, the fit of the underlying gam model is saved in the output. May be set to FALSE to save memory,
 ##'                 but with the side effect that the fit of the gam model cannot be checked.
+##' @param engine   If 'gam', the default, model fitting is done via \code{\link[mgcv]{gam}}. If 'bam', model fitting is done via 
+##'                 \code{\link[mgcv]{bam}}, which is less memory hungry and can be faster for large data sets.          
 ##' @param ... Further arguments passed to \code{\link[mgcv]{gam}}.
 ##' @return An object of class trend.
 ##' @examples
@@ -60,7 +62,8 @@
 ##' summary(trInd)
 ##' @export
 ##' @author Jonas Knape
-ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, nBoot = 500, bootType = "hessian", gamModel = TRUE, ...) {
+ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, nBoot = 500, bootType = "hessian", gamModel = TRUE, engine = 'gam', ...) {
+  engine = match.arg(engine, c('gam', 'bam'))
   call = match.call()
   if (!inherits(formula, "formula"))
     stop("Argument formula needs to be an object of class formula.")
@@ -112,8 +115,10 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
   trendFrame$isGridP = c(rep(FALSE, length(tPoints)), rep(TRUE, nGrid[1]))[ix]
   trendFrame[[deparse(tf$tVar)]] = eval(tf$tVar, trendFrame)
   
-  gamFit = mgcv::gam(formula = tf$formula, data = data, family = family, ...) 
-  
+  if (engine == 'gam')
+    gamFit = mgcv::gam(formula = tf$formula, data = data, family = family, ...) 
+  else 
+    gamFit = mgcv::bam(formula = tf$formula, data = data, family = family, ...) 
   if (tf$tempRE | tf$type == "index") {
     tLevs =  levels(model.frame(gamFit)[[timeVarFac]])
     trendFrame[[timeVarFac]] = factor(sapply(trendFrame[[timeVar]], 

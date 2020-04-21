@@ -3,7 +3,6 @@
 \docType{package}
 \name{poptrend}
 \alias{poptrend}
-\alias{poptrend-package}
 \title{Analyze population trends from survey count data.}
 \description{
 The package provides functions for fitting and analysing trend models of data obtained 
