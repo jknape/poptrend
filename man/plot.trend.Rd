@@ -16,7 +16,7 @@
   decCol = "#D55E00",
   plotGrid = TRUE,
   plotLines = FALSE,
-  ranefCI = TRUE,
+  ranef = "pointCI",
   secDeriv = TRUE,
   ...
 )
@@ -48,7 +48,8 @@ By default, the first time point is taken as the reference.}
 
 \item{plotLines}{If true, the bootstrapped trends are plotted.}
 
-\item{ranefCI}{If true, confidence intervals for random effects are plotted.}
+\item{ranef}{String indicating whether to plot point estimates and/or confidence intervals for random effects. 
+One of 'pointCI', 'point', 'CI' or 'no'.}
 
 \item{secDeriv}{If true, coloured boxes at the bottom of the plot shows segments where the second derivative of the smooth is significantly different from zero.}
 
