@@ -4,8 +4,7 @@
 \alias{trend}
 \title{Define a trend component.}
 \usage{
-trend(var, tempRE = FALSE, type = "smooth", by = NA, k = -1,
-  fx = FALSE)
+trend(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FALSE)
 }
 \arguments{
 \item{var}{A numeric time variable over which a trend or index will be computed.}

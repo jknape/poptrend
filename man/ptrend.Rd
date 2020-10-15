@@ -4,8 +4,17 @@
 \alias{ptrend}
 \title{Fit a smooth or linear trend to count survey data.}
 \usage{
-ptrend(formula, data = list(), family = quasipoisson(), nGrid = 500,
-  nBoot = 500, bootType = "hessian", gamModel = TRUE, ...)
+ptrend(
+  formula,
+  data = list(),
+  family = quasipoisson(),
+  nGrid = 500,
+  nBoot = 500,
+  bootType = "hessian",
+  gamModel = TRUE,
+  engine = "gam",
+  ...
+)
 }
 \arguments{
 \item{formula}{A trend formula. This is a GAM formula with an extra term \code{\link[poptrend]{trend}} describing the 
@@ -28,6 +37,9 @@ covariance matrix of the parameters (see \code{\link[mgcv]{vcov.gam}}).}
 
 \item{gamModel}{If true, the fit of the underlying gam model is saved in the output. May be set to FALSE to save memory,
 but with the side effect that the fit of the gam model cannot be checked.}
+
+\item{engine}{If 'gam', the default, model fitting is done via \code{\link[mgcv]{gam}}. If 'bam', model fitting is done via 
+\code{\link[mgcv]{bam}}, which is less memory hungry and can be faster for large data sets.}
 
 \item{...}{Further arguments passed to \code{\link[mgcv]{gam}}.}
 }
