@@ -4,7 +4,14 @@
 \alias{simTrend}
 \title{Simulate population survey data.}
 \usage{
-simTrend(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3)
+simTrend(
+  nyear = 30,
+  nsite = 40,
+  mu = 3,
+  timeSD = 0.1,
+  siteSD = 0.3,
+  size = Inf
+)
 }
 \arguments{
 \item{nyear}{The number of years in the simulated survey.}
@@ -16,12 +23,14 @@ simTrend(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3)
 \item{timeSD}{Standard deviation (at log-scale) of annual mean deviation from the trend.}
 
 \item{siteSD}{Standard deviation (at log-scale) of simulated among site variation.}
+
+\item{size}{The size parameter of the negative binomial distribution. Defaults to Inf in which case the data are Poisson distributed.}
 }
 \value{
 A data frame containing simulated data.
 }
 \description{
-Simulates count survey data with a non-linear trend, and site and temporal random effects. 
+Simulates simple count survey data with a non-linear trend, and site and temporal random effects. 
 The logistic function is used to create a trend the reduces the expected population size to half 
 its initial value over the time period.
 }

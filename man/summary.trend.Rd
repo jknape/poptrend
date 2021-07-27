@@ -4,35 +4,32 @@
 \alias{summary.trend}
 \title{Summary of trend estimates}
 \usage{
-\method{summary}{trend}(object, ciBase = NULL, alpha = 0.05, ...)
+\method{summary}{trend}(object, baseline = NULL, ...)
 }
 \arguments{
 \item{object}{A trend object returned by \code{\link{ptrend}}.}
 
-\item{ciBase}{A time point or function used to compute the baseline of the trend. 
+\item{baseline}{A time point or vector of times used as the reference level for the index. 
 If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{ptrend}}
 closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
 By default, the first time point is taken as the reference.}
 
-\item{alpha}{alpha level for approximate confidence intervals.}
-
 \item{...}{Not used.}
+
+\item{alpha}{alpha level for approximate confidence intervals.}
 }
 \description{
-Computes a trend or index estimate for each time point in the survey.
+Computes a index estimate for each time point in the survey.
 }
 \details{
-For a smooth or loglinear trend model the function computes an estimate
-of the trend value for each time point in the survey. By default, the reference
+For a smooth or loglinear trend model the function computes an index from
+the estimated trend line at each time point in the survey. By default, the reference
 value is the first time point. Note that if the trend model was fitted with random 
-effects, the random effects are not included in the estimate. Thus the estimate refers
-to the long-term component.
+effects, the random effects are not included in the index. Thus the index refers
+to the long-term component of the trend.
 
 For an index trend model the index at each time point is computed.
-
-If bootstrap samples are available, bootstrap confidence intervals for the trend 
-or index values are also computed.
 }
 \author{
 Jonas Knape

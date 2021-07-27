@@ -1,6 +1,6 @@
 ##' Simulate population survey data.
 ##'
-##' Simulates count survey data with a non-linear trend, and site and temporal random effects. 
+##' Simulates simple count survey data with a non-linear trend, and site and temporal random effects. 
 ##' The logistic function is used to create a trend the reduces the expected population size to half 
 ##' its initial value over the time period.
 ##'
@@ -9,10 +9,12 @@
 ##' @param mu The expected mean of the counts at the start of the survey.
 ##' @param timeSD Standard deviation (at log-scale) of annual mean deviation from the trend.
 ##' @param siteSD Standard deviation (at log-scale) of simulated among site variation.
+##' @param size The size parameter of the negative binomial distribution. Defaults to Inf in which case the data are Poisson distributed.
+##' 
 ##' @return A data frame containing simulated data.
 ##' @export
 ##' @author Jonas Knape
-simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
+simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3, size = Inf){
   if (mu <= 0)
     stop("mu must be positive")
   nyear = nyear
@@ -20,7 +22,7 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
   yeareff = log(.5 + .5*plogis(20 * (nyear/2 - 1:nyear) / nyear)) + timeSD * rnorm(nyear)
   siteeff =  siteSD * rnorm(nsite)
   data = data.frame(count = NA, year = rep(1:nyear, nsite), site = factor(rep(paste0("site", 1:nsite), each = nyear)))
-  data$count = rpois(nyear*nsite, lambda  = exp(log(mu) + yeareff[data$year] + siteeff[rep( 1:nsite, each = nyear)]))
+  data$count = rnbinom(nyear*nsite, mu  = exp(log(mu) + yeareff[data$year] + siteeff[rep( 1:nsite, each = nyear)]), size = size)
   data
 }
 
@@ -40,7 +42,7 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##' 
 ##' There is an additional option of plotting each of the bootstrapped trends.
 ##' @param x A fitted object of class trend.
-##' @param base A time point or function used to compute the baseline of the trend. 
+##' @param baseline A time point or vector of time points used to set baseline of the trend. 
 ##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
 ##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 ##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
@@ -59,17 +61,17 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##' @param ... Further arguments passed to \code{\link[graphics]{plot.default}}.
 ##' @export
 ##' @author Jonas Knape
-plot.trend = function(x, base = NULL, ylab = "abundance index", trendCol = "black", lineCol = adjustcolor("black", alpha.f = 0.05), 
+plot.trend = function(x, baseline = NULL, ylab = "abundance index", trendCol = "black", lineCol = adjustcolor("black", alpha.f = 0.05), 
                       shadeCol = adjustcolor("#0072B2", alpha.f = 0.4), incCol = "#009E73", decCol ="#D55E00",
                       plotGrid = TRUE, gridCol = 'gray80', plotLines = FALSE, ranefCI = TRUE, ...) {
   timeVar = x$timeVar
-  if (!is.null(base)) {
-    if (!identical(base, x$baseline))
-      x = updateBaseline(x, baseline = base)
+  if (!is.null(baseline)) {
+    if (!identical(baseline, x$baseline))
+      x = setBaseline(x, baseline = baseline)
   }
   if (x$trendType != 'index') {
     tGrid = x$trendFrame[[timeVar]]
-    trendEst = x$trendFrame[['trend']]
+    trendEst = x$trendFrame[['index']]
   } else {
     tGrid = x$indexFrame[[timeVar]]
     trendEst = x$indexFrame[['index']]
@@ -109,12 +111,12 @@ plot.trend = function(x, base = NULL, ylab = "abundance index", trendCol = "blac
   do.call(plot, plotArgs)
   if (plotGrid)
     grid(nx = NA, ny = NULL, col = gridCol, lty = 1)
-  if (!is.null(x[['bootT']])) {
+  if (!is.null(x$boot$trend)) {
     bymin = par()$usr[3]
     bymax = bymin + .1 * (par()$usr[4] - bymin)
     if (plotLines) {
-      for (i in 1:ncol(x$bootT)) {
-        points(tGrid, exp(x$bootT[,i] - x$bootRefValue[i]), type = "l", 
+      for (i in 1:ncol(x$boot$trend)) {
+        points(tGrid, exp(x$boot$trend[,i] - x$boot$bootRefValue[i]), type = "l", 
                col = lineCol)
       }
     }
@@ -122,7 +124,7 @@ plot.trend = function(x, base = NULL, ylab = "abundance index", trendCol = "blac
   }
   if (x$trendType != "index")
     points(tGrid, trendEst , type = "l", lwd = 3, col = trendCol)
-  if (!is.null(x[['bootT']])) {
+  if (!is.null(x$boot$trend)) {
     segments(tGrid[replace(pGradInd-1,pGradInd==1,1)], trendEst[replace(pGradInd-1,pGradInd==1,1)],
              tGrid[pGradInd], trendEst[pGradInd], lwd = 3, col = incCol)
     segments(tGrid[pGradInd], trendEst[pGradInd],
@@ -133,11 +135,11 @@ plot.trend = function(x, base = NULL, ylab = "abundance index", trendCol = "blac
              tGrid[nGradInd+1], trendEst[nGradInd+1], lwd = 3, col = decCol)
   }
   if (x$timeRE | x$trendType == "index") {
-    if(!is.null(x$bootIRes)) {
+    if(!is.null(x$boot$residuals)) {
       if (plotLines) {
-        for (i in 1:ncol(x$bootIRes)) {
+        for (i in 1:ncol(x$boot$residuals)) {
           #if (x$timeRE)
-            points(x$indexFrame[[timeVar]], exp(x$bootI[,i] + x$bootIRes[, i] - x$bootRefValue[i]), type = "p", pch = 20,cex = .5,
+            points(x$indexFrame[[timeVar]], exp(x$boot$index[,i] + x$boot$residuals[, i] - x$boot$bootRefValue[i]), type = "p", pch = 20,cex = .5,
                    col = lineCol)
           #else
           #  points(resGrid, x$bootResid[ind, i] / bDiv[i], type = "p", pch = 20,cex = .5,
@@ -148,8 +150,11 @@ plot.trend = function(x, base = NULL, ylab = "abundance index", trendCol = "blac
     if (ranefCI | x$trendType == "index") { # Plot confidence intervals for random effects or index.
         apply(cbind(x$indexFrame[[timeVar]], t(cip )), 1, 
               function(row) lines(x = c(row[1], row[1]), y = row[2:3], lwd = 1, col = trendCol))
-      }
-    points(x$indexFrame[[timeVar]], x$indexFrame[['index']] , type = "p", pch = 20, col = trendCol)
+    }
+    if (x$timeRE)
+      points(x$indexFrame[[timeVar]], x$indexFrame[['index.re']] , type = "p", pch = 20, col = trendCol)
+    else
+      points(x$indexFrame[[timeVar]], x$indexFrame[['index']] , type = "p", pch = 20, col = trendCol)
   }
   invisible(list(x$trendFrame, x$indexFrame))
 }
@@ -188,10 +193,10 @@ plot.trend = function(x, base = NULL, ylab = "abundance index", trendCol = "blac
 change = function(trend, start, end, alpha = .05) {
   if (trend$trendType != "index") {
     tGrid = trend$trendFrame[[trend$timeVar]]
-    trendEst = trend$trendFrame$trendRaw
+    trendEst = trend$trendFrame$indexRaw
   } else {
     tGrid = trend$indexFrame[[trend$timeVar]]
-    trendEst = trend$indexFrame$trendRaw
+    trendEst = trend$indexFrame$indexRaw
   }
   sInd = which.min(abs(start - tGrid))
   eInd = which.min(abs(end - tGrid))
@@ -257,21 +262,19 @@ print.trend = function(x, ...) {
   invisible(x)
 }
 
-##' Computes a trend or index estimate for each time point in the survey.
+##' Computes a index estimate for each time point in the survey.
 ##'
-##' For a smooth or loglinear trend model the function computes an estimate
-##' of the trend value for each time point in the survey. By default, the reference
+##' For a smooth or loglinear trend model the function computes an index from
+##' the estimated trend line at each time point in the survey. By default, the reference
 ##' value is the first time point. Note that if the trend model was fitted with random 
-##' effects, the random effects are not included in the estimate. Thus the estimate refers
-##' to the long-term component.
+##' effects, the random effects are not included in the index. Thus the index refers
+##' to the long-term component of the trend.
 ##' 
 ##' For an index trend model the index at each time point is computed.
 ##' 
-##' If bootstrap samples are available, bootstrap confidence intervals for the trend 
-##' or index values are also computed.
 ##' @title Summary of trend estimates
 ##' @param object A trend object returned by \code{\link{ptrend}}.
-##' @param baseline A time point or function used to compute the baseline of the trend. 
+##' @param baseline A time point or vector of times used as the reference level for the index. 
 ##'               If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{ptrend}}
 ##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 ##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
@@ -280,35 +283,27 @@ print.trend = function(x, ...) {
 ##' @param alpha alpha level for approximate confidence intervals.
 ##' @export
 ##' @author Jonas Knape
-summary.trend = function(object, baseline = NULL, alpha = 0.05, ...) {
-  browser()
-  isTP = which(!object$trendFrame$isGridP)
+summary.trend = function(object, baseline = NULL,  ...) {
   timeVar = object$timeVar
-  tGrid = object$trendFrame[[timeVar]]
-  if (object$trendType != "index")
-    trendEst = object$trendFrame$trend
-  else
-    trendEst = object$trendFrame$trendResid
-  df = data.frame(object$trendFrame[[timeVar]])
-  names(df) = timeVar    
-  if (object$trendType != "index")
-    df$trend = object$trendFrame$trend[isTP] / tDiv
-  if (!is.null(object$bootTrend)) {
-    ciEst = t(apply(object$bootTrend[isTP, ], 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 1)))
-    df[[paste0("  ",alpha/2 * 100, "%")]] = ciEst[,1]
-    df[[paste0("  ",(1 - alpha/2) * 100, "%")]] = ciEst[,2]
-    
+  if (!is.null(baseline)) {
+    if (!identical(baseline, object$baseline))
+      object = setBaseline(object, baseline = baseline)
   }
-  if (object$trendType != "index") {
-    #df$index = object$trendFrame$trendResid[isTP] * df$trend / tDiv
-  } else {
-    df$index = object$trendFrame$trendResid[isTP] / tDiv
-    if(!is.null(object$bootResid)) {
-      ciEst = t(apply(object$bootResid[isTP, ], 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 1)))
-      df[[paste0("  ",alpha/2 * 100, "%")]] = ciEst[,1]
-      df[[paste0("  ",(1 - alpha/2) * 100, "%")]] = ciEst[,2]   
-    }
-  }
+  
+  level = object$ciLevel  
+
+  
+  df = cbind(object$indexFrame[, c(timeVar, 'index')], object$indexCI[, c('ci.low.index', 'ci.upp.index')])
+  names(df)[names(df) == 'ci.low.index'] =paste0("  ",format((1 - level)/2 * 100, digits = 3), "%")
+  names(df)[names(df) == 'ci.upp.index'] =paste0("  ",format((1 + level) /2 * 100, digits = 3), "%")
+  
+  # if (object$timeRE) {
+  #   df = cbind(df, object$indexFrame[, 'index.re', drop = FALSE], object$indexCI[, c('ci.low.re', 'ci.upp.re')])
+  #   names(df)[names(df) == 'index.re'] = 'RE-index'
+  #   names(df)[names(df) == 'ci.low.re'] = paste0("REI",format((1 - level)/2 * 100, digits = 3), "%")
+  #   names(df)[names(df) == 'ci.upp.re'] = paste0("REI",format((1 + level) /2 * 100, digits = 3), "%")
+  # }
+  
   out = list(formula = object$formula, family = object$family, 
              trendType = object$trendType, estimates = df)
   class(out) = "summary.trend"
@@ -318,13 +313,15 @@ summary.trend = function(object, baseline = NULL, alpha = 0.05, ...) {
 #' @export
 print.summary.trend = function(x, ..., digits = 2) {
   #browser()
+  cat("Family: ")
+  cat(x$family$family,'\n')
   cat("Formula: ")
   print(x$formula)
   cat("Trend type: ", x$trendType)
   cat("\n\n")
-  if (x$trendType != "index")
-    cat("Trend estimates:\n\n")
-  else
+#  if (x$trendType != "index")
+#    cat("Trend estimates:\n\n")
+#  else
     cat("Index estimates:\n\n")
   print(x$estimates, ..., digits = digits, row.names = FALSE)
   invisible(x)

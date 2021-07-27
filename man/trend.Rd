@@ -11,7 +11,7 @@ trend(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FALSE)
 
 \item{tempRE}{If TRUE, this will set up random time effects. The random effects will be constructed by converting the
 var argument to a factor. Note that this yields a random effect level for each unique value in var.
-If this is not appropriate, an alternative is to set tempRE to false and manually add temporal random
+If this is not appropriate, an alternative is to set tempRE to FALSE and manually add temporal random
 effects in the trend formula (using s(..., bs = "re")). Temporal random effects cannot be used with
 index estimation.}
 

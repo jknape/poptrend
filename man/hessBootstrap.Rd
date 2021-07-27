@@ -4,12 +4,12 @@
 \alias{hessBootstrap}
 \title{Compute bootstrap confidence intervals based on sampling from the variance-covariance matrix.}
 \usage{
-hessBootstrap(trend, nBoot = 500)
+hessBootstrap(object, nBoot = 500)
 }
 \arguments{
-\item{trend}{An object of class trend.}
-
 \item{nBoot}{The number of bootstrap samples to draw.}
+
+\item{trend}{An object of class trend.}
 }
 \value{
 A trend object with the bootstrapped trend estimates appended.

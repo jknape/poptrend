@@ -6,8 +6,7 @@
 \usage{
 \method{plot}{trend}(
   x,
-  ciBase = NULL,
-  alpha = 0.05,
+  baseline = NULL,
   ylab = "abundance index",
   trendCol = "black",
   lineCol = adjustcolor("black", alpha.f = 0.05),
@@ -15,22 +14,20 @@
   incCol = "#009E73",
   decCol = "#D55E00",
   plotGrid = TRUE,
+  gridCol = "gray80",
   plotLines = FALSE,
   ranefCI = TRUE,
-  secDeriv = TRUE,
   ...
 )
 }
 \arguments{
 \item{x}{A fitted object of class trend.}
 
-\item{ciBase}{A time point or function used to compute the baseline of the trend. 
+\item{baseline}{A time point or vector of time points used to set baseline of the trend. 
 If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
 closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
 By default, the first time point is taken as the reference.}
-
-\item{alpha}{The alpha level of confidence intervals.}
 
 \item{ylab}{The label of the y-axis.}
 
@@ -46,13 +43,15 @@ By default, the first time point is taken as the reference.}
 
 \item{plotGrid}{If true, grid lines are plotted.}
 
+\item{gridCol}{Color of grid lines.}
+
 \item{plotLines}{If true, the bootstrapped trends are plotted.}
 
 \item{ranefCI}{If true, confidence intervals for random effects are plotted.}
 
-\item{secDeriv}{If true, coloured boxes at the bottom of the plot shows segments where the second derivative of the smooth is significantly different from zero.}
-
 \item{...}{Further arguments passed to \code{\link[graphics]{plot.default}}.}
+
+\item{alpha}{The alpha level of confidence intervals.}
 }
 \description{
 The function plots an estimated trend or index, as well as estimates of any temporal random effects included in the

@@ -7,11 +7,9 @@
 ptrend(
   formula,
   data = list(),
-  family = quasipoisson(),
+  family = "nb",
   nGrid = 500,
   nBoot = 500,
-  bootType = "hessian",
-  gamModel = TRUE,
   engine = "gam",
   ...
 )
@@ -19,11 +17,11 @@ ptrend(
 \arguments{
 \item{formula}{A trend formula. This is a GAM formula with an extra term \code{\link[poptrend]{trend}} describing the 
 time variable and properties of the trend. All terms except the trend term are treated as covariates. 
-Effect of temporal variation in these covariates are not included in the calculation of the trend.}
+Effects of temporal variation in these covariates are not included in the calculation of the trend.}
 
 \item{data}{A data frame containing response variables and covariates.}
 
-\item{family}{The distributional family of the response. The family most use a log-link, it defaults to a quasi-Poisson.}
+\item{family}{The distributional family of the response. The family must use a log-link. Defaults to a negative binomial \code{\link[mgcv]{nb}}.}
 
 \item{nGrid}{The number of grid points over which to compute the trend.
 If the length of the argument is one, an equally spaced grid over the survey period of length nGrid is set up.
@@ -31,12 +29,6 @@ nGrid can also be a vector of length 3, in which case the first element is the n
 second and third elements give, respectively, the start and endpoints of the grid.}
 
 \item{nBoot}{The number of bootstrap samples to draw.}
-
-\item{bootType}{Only one method, "hessian", currently implemented. Type "hessian", draws bootstrap samples using the Bayesian
-covariance matrix of the parameters (see \code{\link[mgcv]{vcov.gam}}).}
-
-\item{gamModel}{If true, the fit of the underlying gam model is saved in the output. May be set to FALSE to save memory,
-but with the side effect that the fit of the gam model cannot be checked.}
 
 \item{engine}{If 'gam', the default, model fitting is done via \code{\link[mgcv]{gam}}. If 'bam', model fitting is done via 
 \code{\link[mgcv]{bam}}, which is less memory hungry and can be faster for large data sets.}
@@ -68,14 +60,14 @@ estimated coefficients and covariance matrix equal to the Bayesian posterior cov
 data = simTrend(15, 25)
 ## Fit a smooth trend with fixed site effects, random time effects,
 ## and automatic selection of degrees of freedom
-trFit = ptrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
+trSmo = ptrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
 ## Check the model fit
-checkFit(trFit)
+checkFit(trSmo)
 ## Plot the trend
-plot(trFit)
-summary(trFit)
+plot(trSmo)
+summary(trSmo)
 ## Check the estimated percent change from year 8 to 25
-change(trFit, 8, 25)
+change(trSmo, 8, 25)
 
 ## Fit a loglinear trend model with random site effects and random time effects 
 ## to the same data set.
@@ -91,6 +83,19 @@ cov = rnorm(nrow(data))
 trInd = ptrend(count ~ trend(year, type = "index") + site + s(cov), data = data)
 plot(trInd)
 summary(trInd)
+
+## trend objects inherit from 'gam' so that most methods available for gam objects 
+## can be directly used with trend objects. This can be used to extract further information.
+
+summary.gam(trSmo)
+
+AIC(trSmo)
+
+plot(residuals(trSmo))
+
+## Compare smooth and loglinear models
+anova(trSmo, trLin)
+
 }
 \author{
 Jonas Knape

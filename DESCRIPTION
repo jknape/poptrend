@@ -1,16 +1,14 @@
 Package: poptrend
 Title: Estimate Smooth and Linear Trends from Population Count Survey Data
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Jonas", "Knape", email = "jonas.knape@slu.se", role = c("aut", "cre"))
 Description: Functions to estimate and plot smooth or linear population trends, or population indices, 
     from animal or plant count survey data.
 Depends:
-    R (>= 3.1.2)
+    R (>= 3.1.2),
+    mgcv (>= 1.7.0)
 License: GPL-3
 LazyData: true
-Imports:
-    mgcv (>= 1.7.0),
-    stats,
-    graphics
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 URL: https://github.com/jknape/poptrend
+BugReports: https://github.com/jknape/poptrend/issues
