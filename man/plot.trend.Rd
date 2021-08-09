@@ -8,15 +8,16 @@
   x,
   baseline = NULL,
   ylab = "abundance index",
-  trendCol = "black",
-  lineCol = adjustcolor("black", alpha.f = 0.05),
+  trendCol = "#0072B2",
+  lineCol = adjustcolor("#0072B2", alpha.f = 0.05),
   shadeCol = adjustcolor("#0072B2", alpha.f = 0.4),
   incCol = "#009E73",
-  decCol = "#D55E00",
+  decCol = "#d90211",
   plotGrid = TRUE,
   gridCol = "gray80",
   plotLines = FALSE,
   ranefCI = TRUE,
+  lwd = 3,
   ...
 )
 }
@@ -48,6 +49,8 @@ By default, the first time point is taken as the reference.}
 \item{plotLines}{If true, the bootstrapped trends are plotted.}
 
 \item{ranefCI}{If true, confidence intervals for random effects are plotted.}
+
+\item{lwd}{Width of the trend line for smooth or loglinear trends.}
 
 \item{...}{Further arguments passed to \code{\link[graphics]{plot.default}}.}
 

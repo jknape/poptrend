@@ -3,14 +3,15 @@
 ##' The function estimates smooth or loglinear population trends, or indexes from simple design count survey data. 
 ##' It is essentially a wrapper around a call to \code{\link[mgcv]{gam}}, processing its output using \code{\link[mgcv]{predict.gam}}
 ##' to produce a trend estimate.
-##' For smooth trends, cubic regression splines for the temporal variable are set up by the term \code{s(var, k = k, fx = fx , bs = "cr")}
+##' Smooth trends for the temporal variable are set up by the term \code{s(var, k = k, fx = fx , bs = bs)}
 ##' where \code{var} is the first argument to \code{\link[poptrend]{trend}} in the formula.
-##' For loglinear trends, the identity of \code{var} is used, and for index models a factor variable is constructed from \code{var}.
+##' For loglinear trends, the identity of \code{var} is used, and for index models a factor variable is constructed from \code{var}
+##' with one level for each unique time point in \code{var} with corresponding observations in the data.
 ##'
 ##' Temporal random effects are set up by converting the temporal variable supplied to \code{\link{trend}} to a factor variable
 ##' and adding this factor variable to the data supplied to \code{\link[mgcv]{gam}}.
 ##' 
-##' Bootstrap confidence intervals are computed by drawing normally distributed random variable with means equal to the
+##' Bootstrap confidence intervals are computed by drawing normally distributed random variables with means equal to the
 ##' estimated coefficients and covariance matrix equal to the Bayesian posterior covariance matrix (see \link[mgcv]{vcov.gam}). 
 ##' 
 ##' @title Fit a smooth or linear trend to count survey data.
@@ -27,7 +28,7 @@
 ##' @param engine   If 'gam', the default, model fitting is done via \code{\link[mgcv]{gam}}. If 'bam', model fitting is done via 
 ##'                 \code{\link[mgcv]{bam}}, which is less memory hungry and can be faster for large data sets.          
 ##' @param ... Further arguments passed to \code{\link[mgcv]{gam}}.
-##' @return An object of class trend.
+##' @return An object of class trend that inherits from class gam.
 ##' @examples
 ##' ## Simulate a data set with 15 sites and 25 years
 ##' data = simTrend(15, 25)
@@ -35,7 +36,7 @@
 ##' ## and automatic selection of degrees of freedom
 ##' trSmo = ptrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
 ##' ## Check the model fit
-##' checkFit(trSmo)
+##' gam.check(trSmo)
 ##' ## Plot the trend
 ##' plot(trSmo)
 ##' summary(trSmo)
@@ -136,17 +137,29 @@ ptrend = function(formula, data = list(), family = 'nb', nGrid = 500, nBoot = 50
     trendFrame[[deparse(tf$tVar)]] = eval(tf$tVar, trendFrame)
   } else {trendFrame = NULL}
   
+  # Start constructing trend object
+  out = c(gamFit, list(trendFormula = formula, 
+             countVar = tf$response, timeVar = timeVar, timeVarFac = timeVarFac, tPredName = tf$predName, 
+             timeRE = tf$tempRE, trendType = tf$type, k = tf$k, fx = tf$fx, ptrendCall = call))
+  
+  class(out) = class(gamFit)
+  gamFit = NULL
+  if (out$trendType != 'index') {
+    out$timeVarLab = extractGamLabel(out, timeVar)
+  }
+  if (out$timeRE | out$trendType == 'index') {
+    out$timeVarFacLab = extractGamLabel(out, timeVarFac)
+  }
   # Construct data frame for annual indices
   tPoints = sort(tPoints)
   indexFrame = data.frame(tPoints)
-  names(indexFrame) = tf$predName
+  names(indexFrame) = out$tPredName
   indexFrame[[deparse(tf$tVar)]] = eval(tf$tVar, indexFrame)
-  
-  if (tf$tempRE | tf$type == "index") {
-    tLevs =  levels(model.frame(gamFit)[[timeVarFac]])
+  if (out$timeRE | out$trendType == "index") {
+    tLevs =  levels(model.frame(out)[[timeVarFac]])
     indexFrame[[timeVarFac]] = factor(indexFrame[[timeVar]], levels = tLevs)
     
-    if (tf$type != "index") {
+    if (out$trendType != "index") {
     trendFrame[[timeVarFac]] = factor(sapply(trendFrame[[timeVar]], 
                                              function(time, levs) {levs[which.min(abs(time - as.numeric(levs)))]}, 
                                               levs = tLevs), levels = tLevs)
@@ -154,11 +167,11 @@ ptrend = function(formula, data = list(), family = 'nb', nGrid = 500, nBoot = 50
     }
   }
   
-  mf = get_all_vars(gamFit, data)
-  predFNames = attr(terms(gamFit$pred.formula), "term.labels")
-  mf = mf[which(colnames(mf) %in% setdiff(predFNames, c(tf$response, tf$predName, timeVarFac)))]
+  mf = get_all_vars(out, data)
+  predFNames = attr(terms(out$pred.formula), "term.labels")
+  mf = mf[which(colnames(mf) %in% setdiff(predFNames, c(out$response, out$tPredName, timeVarFac)))]
   
-#  for (i in seqP(1, ncol(mf))) {
+  # Set non-trend terms to constants for prediction. Note that this includes any offset.
   for (i in seq_len(ncol(mf))) {
     cname = colnames(mf)[i]
 #    if(is.numeric(mf[[cname]])) {
@@ -166,59 +179,26 @@ ptrend = function(formula, data = list(), family = 'nb', nGrid = 500, nBoot = 50
 #    } else {
       indexFrame[[cname]] = mf[[i]][which(!is.na(mf[[i]]))[1]]
 #    }
-    if (tf$type != "index") 
+    if (out$trendType != "index") 
       trendFrame[[cname]] = indexFrame[[cname]][1]
   }
-  predIndex = predict(gamFit, indexFrame, block.size = nrow(indexFrame), type = "lpmatrix")
-  if (tf$type != "index") {
-    predTrend = predict(gamFit, trendFrame, block.size = nrow(trendFrame), type = "lpmatrix") # What if contrasts set differently
-    stopifnot(identical(colnames(predTrend), colnames(predIndex))) # DEBUG
-  }
-  if (tf$type == "smooth") {
-    tCol = grep(extractGamLabel(timeVar, formula(gamFit)), colnames(predIndex), fixed = TRUE)
-  }
-  if (tf$type == "loglinear") {
-    tCol = which(colnames(predIndex) == timeVar)
-  }
-  if (tf$type == "index") {
-    stopifnot(any(grepl("(Intercept)", colnames(predIndex), fixed = TRUE))) # DEBUG
-    tCol = c(grep("(Intercept)", colnames(predIndex), fixed = TRUE), grep(timeVarFac, colnames(predIndex), fixed = TRUE))
-  }
-  indexFrame$indexRaw = as.numeric(predIndex[, tCol, drop = FALSE] %*% coef(gamFit)[tCol, drop = FALSE])
-  if (tf$type != "index") {
-    trendFrame$indexRaw = as.numeric(predTrend[, tCol, drop = FALSE] %*% coef(gamFit)[tCol, drop = FALSE])
-  } 
-  if(tf$tempRE) {
-    tCol = grep(extractGamLabel(timeVarFac, formula(gamFit)), colnames(predIndex), fixed = TRUE)
-    indexFrame$resid = as.numeric(predIndex[, tCol] %*% coef(gamFit)[tCol])
-  }
-  
-  
-#  out = list(trendFrame = trendFrame, indexFrame = indexFrame,
-#             formula = formula, family = family, gam = gamFit,
-#             countVar = tf$response, timeVar = timeVar, timeVarFac = timeVarFac, tPredName = tf$predName, 
-#             timeRE = tf$tempRE, trendType = tf$type, k = tf$k, fx = tf$fx, bootI = NULL, bootIRes = NULL, bootT = NULL,
-#             call = call)
-#  class(out) = "trend"
 
-  ## TEST
-  out = list(trendFrame = trendFrame, indexFrame = indexFrame,
-                          formula = formula, family = family,
-                          countVar = tf$response, timeVar = timeVar, timeVarFac = timeVarFac, tPredName = tf$predName, 
-                          timeRE = tf$tempRE, trendType = tf$type, k = tf$k, fx = tf$fx,
-                          call = call)
+  rawT = computeRawTrend(out, indexFrame, estimate = TRUE, resid = TRUE, nBoot = 0)
   
+  indexFrame = cbind(indexFrame, rawT)
+  if (tf$type != "index") {
+    rawT = computeRawTrend(out, trendFrame, estimate = TRUE, resid = FALSE, nBoot = 0)
+    trendFrame = cbind(trendFrame, rawT)
+  } 
   
-  out = c(gamFit, out)
-  class(out) = c('trend', class(gamFit)) 
-  
-  ## END TEST
-  
+  out$trendFrame = trendFrame
+  out$indexFrame = indexFrame
+  class(out) = c('trend', class(out)) 
   if (nBoot > 0) {
-    out = hessBootstrap(out, nBoot)
+    out = hessBoot(out, nBoot)
   }  
-  out = setBaseline(out)
   
+  out = updateBaseline(out)
   out
 }
 
@@ -261,6 +241,7 @@ interpret.trendF = function(formula) {
 ##' @param k The dimension of the basis for the cubic regression spline of smooth trend fits.
 ##' @param fx If true, automatic selection of degrees of freedom are used for smooth trends.
 ##' @param bs The basis to use for smooth trends. Defaults to a cubic regression spline "cr".
+##'           Currently available options are 'cr', 'cs' , 'tp', 'ts', and 'gp'. See \code{\link[mgcv]{smooth.terms}}.
 ##' @return A list containing information to set up the trend.
 ##' @export
 ##' @author Jonas Knape
@@ -274,8 +255,8 @@ interpret.trendF = function(formula) {
 ##' plot(trFit)
 trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FALSE, bs = "cr") {
   type = match.arg(type, c("smooth", "loglinear", "index"))
-  bs = match.arg(bs, c('cr', 'cs' , 'tp', 'ts', 'gp', 'ds'))
-  .tVarExt = "__Fac"
+  bs = match.arg(bs, c('cr', 'cs' , 'tp', 'ts', 'gp'))
+  .tVarExt = "__RE"
   tVar = substitute(var)
   if (length(all.vars(tVar)) != 1)
     stop("Trend term must have one variable.")
@@ -304,10 +285,14 @@ trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FAL
 
 
 #Extract labels for named terms
-extractGamLabel = function(variable, formula) {
+extractGamLabel = function(object, variable) {
   # TODO: Need to detect cases where 'variable' is hidden in compound terms, e.g. s(variable, foo)
-  smoothTerms = sapply(mgcv::interpret.gam(formula)$smooth, function (x) c(paste(x$term, collapse = ""), x$label))
-  paramTerms = labels(terms(mgcv::interpret.gam(formula)$pf))
+  smoothTerms = sapply(object$smooth, function (x) c(paste(x[['term']], collapse = ""), x[['label']]))
+  if (length(smoothTerms) == 0) 
+    smoothTerms = NULL
+  paramTerms = labels(terms(object$pterms))
+  if (any(!(labels(terms(object)) %in% c(paramTerms, smoothTerms[1,]))))
+    stop() 
   tlInd = which(variable == smoothTerms[1, ])
   if (length(tlInd) == 1) {
     if(variable %in% paramTerms) warning(paste("variable", variable, "occurs as both smoothed and parametric term, smooth term used."))
@@ -341,91 +326,123 @@ convertTimeToFactor = function(times, fac) {
 ##' Bootstrapped samples computed in this way do not account for any uncertainty in the selection of degrees
 ##' of freedom.
 ##' @title Compute bootstrap confidence intervals based on sampling from the variance-covariance matrix.
-##' @param trend An object of class trend.
+##' @param object An object of class trend.
 ##' @param nBoot The number of bootstrap samples to draw.
 ##' @return A trend object with the bootstrapped trend estimates appended.
 ##' @export
 ##' @author Jonas Knape
-hessBootstrap = function(object, nBoot = 500, newTime = NULL) {
+hessBoot = function(object, nBoot = 500) {
   if (is.null(object$bootType)) {
     object$bootType = "hessian"
-  } else if (trend$bootType != "hessian") {
-    stop("Can't mix different bootstrap methods.")
   }
-  if (object$trendType != 'index')
-    XT = mgcv::predict.gam(object, newdata = object$trendFrame, type = "lpmatrix")
-  XI = mgcv::predict.gam(object, newdata = object$indexFrame, type = "lpmatrix")
-  if (object$trendType == "smooth") {
-    tCol = grep(extractGamLabel(object$timeVar, mgcv::formula.gam(object)), colnames(XI), fixed = TRUE)
-    tFacCol = integer(0)
-  }
-  if (object$trendType == "loglinear") {
-    tCol = which(colnames(XI) == object$timeVar)
-    tFacCol = integer(0)
-  }
-  if (object$trendType == "index") {
-    tCol = integer(0)
-    tFacCol = c(grep("(Intercept)", colnames(XI), fixed = TRUE), grep(object$timeVarFac, colnames(XI), fixed = TRUE))
-  }
-  if(object$timeRE) {
-    tFacCol = grep(extractGamLabel(object$timeVarFac, mgcv::formula.gam(object)), colnames(XI), fixed = TRUE)
-  } 
-  XI = XI[, c(tCol, tFacCol), drop = FALSE]
+  newData = object$indexFrame
+  newDataT = NULL
   if (object$trendType != 'index') {
-    XT = XT[, c(tCol, tFacCol), drop = FALSE]
-    stopifnot(identical(colnames(XT), colnames(XI))) #DEBUG
-  }
-  cf = coef(object)[c(tCol, tFacCol)]
-  vc  = mgcv::vcov.gam(object)[c(tCol, tFacCol), c(tCol, tFacCol)]
-  chvc = t(chol(vc))
-  bootI = bootI = NULL
-  bootT = NULL
-  bootIRes = NULL
-  cfn = cf + chvc %*% matrix(rnorm(length(cf) * nBoot), ncol = nBoot, nrow = length(cf))
-  if (object$trendType != "index") {
-    bootT = XT[, seq_len(length(tCol)), drop = FALSE] %*% cfn[seq_len(length(tCol)), , drop = FALSE]
-    bootI = XI[, seq_len(length(tCol)), drop = FALSE] %*% cfn[seq_len(length(tCol)), , drop = FALSE]
-    if (object$timeRE) {
-      bootIRes = XI[, length(tCol) + seq_len(length(tFacCol)), drop = FALSE] %*% 
-                                     cfn[length(tCol) + seq_len(length(tFacCol)), , drop = FALSE]
-    }
-    
-  }  else { # Standardize each simulation to avoid numerical problems. Could also be done for non-index trends. TODO.
-    #XC = XI[, length(tCol) + seq_len(length(tFacCol)), drop = FALSE] %*% 
-    #  cfn[length(tCol) + seq_len(length(tFacCol)), , drop = FALSE]
-    #bdtFac = cbind(bdtFac, exp(XC-kronecker(rep(1,nrow(XC)), t(colSums(XC)/nrow(XC)))))
-    bootI = XI[, length(tCol) + seq_len(length(tFacCol)), drop = FALSE] %*% 
-                cfn[length(tCol) + seq_len(length(tFacCol)), , drop = FALSE]
-  }
+    newDataT = object$trendFrame
+  }  
+  newDataT$indexRaw = newDataT$resid = newData$indexRaw = newData$resid = NULL
   
-  object$boot = list(index = bootI, trend = bootT, residuals = bootIRes)
+  if (!is.null(newData) & !is.null(newDataT) & !identical(colnames(newData), colnames(newDataT)))
+    stop('Something is wrong. Please report bug to package maintainer.')
+  # Concatenate to use the same bootstrap parameters for indexFrame and trendFrame.
+  boot = computeRawTrend(object, rbind(newData, newDataT), estimate = FALSE, resid = FALSE, nBoot)
+  iInd = seq_len(nrow(newData))
+  object[['boot']] = list(nBoot = boot$nBoot, index = boot$bootIndex[iInd, ])
+  if (object$trendType != 'index') {
+    tInd = max(iInd) + seq_len(nrow(newDataT))
+    object$boot$trend = boot$bootIndex[tInd, ]
+  }
+  if (object$timeRE) 
+    object$boot$residuals = boot$bootResid[iInd, ]
+
+  ## TODO!!
+  ## updateBaseline if hessBoot is called directly on previously fitted object. 
+    
   object
 }
 
-setBaseline = function(object, baseline = NA, level = .95) {
+computeRawTrend = function(object, newdata, estimate, resid, nBoot = 0) {
+  is.null(newdata) # Just to give an error if newdata is missing. predict.gam swallows it.
+  X = mgcv::predict.gam(object, newdata = newdata, type = "lpmatrix")
+  if (object$trendType == "smooth") {
+    tCol = grep(object$timeVarLab, colnames(X), fixed = TRUE)
+    tResCol = integer(0)
+  }
+  if (object$trendType == "loglinear") {
+    tCol = which(object$timeVarLab == colnames(X))
+    tResCol = integer(0)
+  }
+  if (object$trendType == "index") {
+    tResCol = integer(0)
+    tCol = c(grep("(Intercept)", colnames(X), fixed = TRUE), grep(object$timeVarFac, colnames(X), fixed = TRUE))
+  }
+  if(object$timeRE) {
+    tResCol = grep(object$timeVarFacLab, colnames(X), fixed = TRUE)
+  } 
+  if (length(intersect(tResCol, tCol)) > 0)
+    stop()
+  #X = X[, c(tCol, tResCol), drop = FALSE]
+  cf = coef(object)
+  
+  out = list()
+  
+  if (estimate) {
+    out$indexRaw = as.numeric(X[, tCol, drop = FALSE] %*% cf[tCol])
+  }
+  if (resid & object$timeRE) {
+    out$resid = as.numeric(X[, tResCol, drop = FALSE] %*% cf[tResCol])
+  }
+  
+  if (nBoot > 0) {
+    # Subset to avoid unnecessary chol factorization of full variance matrix.
+    X = X[ , c(tCol, tResCol), drop = FALSE]
+    cf = cf[c(tCol, tResCol)]
+    vc  = mgcv::vcov.gam(object)[c(tCol, tResCol), c(tCol, tResCol)]
+    chvc = t(chol(vc)) # Use mgcv::mroot instead?
+    cfn = cf + chvc %*% matrix(rnorm(length(cf) * nBoot), ncol = nBoot, nrow = length(cf))
+    
+    index = resid = NULL
+    index = X[, seq_len(length(tCol)), drop = FALSE] %*% cfn[seq_len(length(tCol)), , drop = FALSE]
+    if (object$timeRE) {
+      resid = X[, length(tCol) + seq_len(length(tResCol)), drop = FALSE] %*% 
+        cfn[length(tCol) + seq_len(length(tResCol)), , drop = FALSE]
+    }
+    
+    out = c(out, list(nBoot = nBoot, bootIndex = index, bootResid = resid))
+  }
+  out
+}
+
+
+
+
+updateBaseline = function(object, baseline = NA, level = .95) {
   timeVar = object$timeVar
   if (length(baseline) == 1) { 
     if (is.na(baseline)) {
       baseline = min(object$indexFrame[[timeVar]])
     }
   }
-  if (!all(baseline %in% object$indexFrame[[timeVar]])) {
+  if (!all(baseline %in% object$indexFrame[[timeVar]])) { # TODO: Use numeric comparison instead of exact equality.
     stop('baseline can only contain time points with observations')
   }
   bootRefValue = NULL
   if (length(baseline) == 1) {
     trendRefValue = object$indexFrame$indexRaw[object$indexFrame[[timeVar]] == baseline]
-    if(!is.null(object$boot$index)) {
+    if(!is.null(object[['boot']][['index']])) {
       bootRefValue = object$boot$index[object$indexFrame[[timeVar]] == baseline,]
     }
   } else {
     trendRefValue = log(mean(exp(object$indexFrame$indexRaw[object$indexFrame[[timeVar]] %in% baseline])))
-    if(!is.null(object$boot$index)) {
+    if(!is.null(object[['boot']][['index']])) {
       bootRefValue = log(apply(exp(object$boot$index[object$indexFrame[[timeVar]] %in% baseline, ]), 2, mean))
     }
   }
   if (object$trendType != 'index') {
     object$trendFrame$index = exp(object$trendFrame$indexRaw - trendRefValue)
+    object$trendFrame$d1 = fderiv(object$trendFrame[, 'index', drop = FALSE], object$trendFrame[[object$timeVar]], order = 1)
+    object$trendFrame$d2 = fderiv(object$trendFrame[, 'index', drop = FALSE], object$trendFrame[[object$timeVar]], order = 2)
+    attr(object$trendFrame, 'baseline') = baseline
     object$indexFrame$index = exp(object$indexFrame$indexRaw - trendRefValue)
     if (object$timeRE) {
       object$indexFrame$index.re = exp(object$indexFrame$indexRaw + object$indexFrame$resid - trendRefValue)
@@ -433,12 +450,11 @@ setBaseline = function(object, baseline = NA, level = .95) {
   } else {
     object$indexFrame$index = exp(object$indexFrame$indexRaw - trendRefValue)
   }
+  attr(object$indexFrame, 'baseline') = baseline
   
-  object$baseline = baseline
   object$trendRefValue = trendRefValue
   
   object$boot$bootRefValue = bootRefValue
-  
   
   object = updateConfLevel(object, level = level)
   
@@ -448,12 +464,13 @@ setBaseline = function(object, baseline = NA, level = .95) {
 updateConfLevel = function(object, level) {
   if (!is.numeric(level) | level <= 0 | level >= 1)
     stop('level need to be a number between 0 and 1.')
-  if (is.null(object$boot)) {
+  if (is.null(object[['boot']])) {
     stop('No uncertainty estimate available.')
   }
-  if (is.null(object$boot$bootRefValue)) {
+  if (is.null(object[['boot']][['bootRefValue']])) {
     stop('Baseline not set.')
   }
+  bootcheck(object$boot$nBoot, level)
   probs = c(.5 - level / 2, .5 +  level / 2)
   bIT = object$boot$index - kronecker(rep(1,nrow(object$boot$index)), t(object$boot$bootRefValue))
   ciIT = t(apply(exp(bIT), 1, quantile, probs = probs))
@@ -464,10 +481,12 @@ updateConfLevel = function(object, level) {
   if (object$trendType != 'index') {
     bT = exp(object$boot$trend - kronecker(rep(1,nrow(object$boot$trend)), t(object$boot$bootRefValue)))
     ciT = apply(bT, 1, quantile, probs = probs)
-    grad1 = getGradient(bT, order = 1)
-    grad2 = getGradient(bT, order = 2)
-    trendCI = data.frame(t(ciT), rowMeans(grad1 > 0), rowMeans(grad2 > 0))
-    colnames(trendCI) = c('ciLow', 'ciUpp', 'grad1p', 'grad2p')
+    
+    grad1 = apply(fderiv(bT, grid = object$trendFrame[[object$timeVar]], order = 1), 1, quantile, probs = probs)
+    grad2 = apply(fderiv(bT, grid = object$trendFrame[[object$timeVar]], order = 2), 1, quantile, probs = probs)
+    trendCI = data.frame(t(ciT), t(grad1), t(grad2))
+    colnames(trendCI) = paste0(rep(c('ci.low.', 'ci.upp.'), 3), rep(c('index', 'd1', 'd2'), each = 2))
+    attr(trendCI, 'level') = level
     object$trendCI = trendCI
   }
   if (object$timeRE) {
@@ -480,11 +499,21 @@ updateConfLevel = function(object, level) {
     colnames(indexCI) = c('ci.low.index', 'ci.upp.index', 'SE.index', 'SE.log.index')[1:ncol(indexCI)]
   else
     colnames(indexCI) = c('ci.low.index', 'ci.upp.index', 'SE.index', 'SE.log.index', 'ci.low.re', 'ci.upp.re')[1:ncol(indexCI)]
+  attr(indexCI, 'level') = level
   object$indexCI = indexCI
-  object$ciLevel = level
   object
 
 }
 
+# Very simple check that there are 'enough' bootstrap samples.
+# Requires at least 25 samples in the tails.
+bootcheck =  function(nBoot, level) {
+  if (nBoot * (1-level) >= 25) {
+    return()
+  } else {
+    warning('Number of bootstrap samples (', nBoot, ') low for the given confidence level (', level, '). 
+            Consider increasing the number of bootstraps to at least ' , ceiling(25/(1-level)), ', or use a lower confidence level.')
+  }
+}
 
 

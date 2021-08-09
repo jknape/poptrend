@@ -9,15 +9,9 @@
 \arguments{
 \item{object}{A trend object returned by \code{\link{ptrend}}.}
 
-\item{baseline}{A time point or vector of times used as the reference level for the index. 
-If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{ptrend}}
-closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
-If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
-By default, the first time point is taken as the reference.}
+\item{baseline}{}
 
 \item{...}{Not used.}
-
-\item{alpha}{alpha level for approximate confidence intervals.}
 }
 \description{
 Computes a index estimate for each time point in the survey.

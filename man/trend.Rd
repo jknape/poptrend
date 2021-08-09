@@ -4,7 +4,15 @@
 \alias{trend}
 \title{Define a trend component.}
 \usage{
-trend(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FALSE)
+trend(
+  var,
+  tempRE = FALSE,
+  type = "smooth",
+  by = NA,
+  k = -1,
+  fx = FALSE,
+  bs = "cr"
+)
 }
 \arguments{
 \item{var}{A numeric time variable over which a trend or index will be computed.}
@@ -22,6 +30,9 @@ index estimation.}
 \item{k}{The dimension of the basis for the cubic regression spline of smooth trend fits.}
 
 \item{fx}{If true, automatic selection of degrees of freedom are used for smooth trends.}
+
+\item{bs}{The basis to use for smooth trends. Defaults to a cubic regression spline "cr".
+Currently available options are 'cr', 'cs' , 'tp', 'ts', and 'gp'. See \code{\link[mgcv]{smooth.terms}}.}
 }
 \value{
 A list containing information to set up the trend.

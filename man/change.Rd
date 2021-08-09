@@ -4,7 +4,15 @@
 \alias{change}
 \title{Compute the change in the population over a time interval.}
 \usage{
-change(trend, start, end, alpha = 0.05)
+change(
+  trend,
+  start,
+  end,
+  level = 0.95,
+  nBoot = 2000,
+  type = "percent",
+  pointwise = FALSE
+)
 }
 \arguments{
 \item{trend}{A fitted object of class trend.}
@@ -13,14 +21,23 @@ change(trend, start, end, alpha = 0.05)
 
 \item{end}{End time for the comparison.}
 
-\item{alpha}{alpha-level for approximate confidence interval.}
+\item{level}{Approximate level for confidence intervals.}
+
+\item{nBoot}{Number of bootstrap samples to draw. For high precision of confidence intervals, a large number is recommended.
+Defaults to 2000.}
+
+\item{type}{Determines whether the change is computed as a difference at the log scale, as a multiplicative factor, or as the percentage change. 
+One of 'factor', 'log' or 'percent'.}
+
+\item{pointwise}{If true the change between every pair of time points in start and end are computed. Otherwise . 
+If both start and end are scalar, this argument is of little consequence.}
 }
 \value{
 A list containing the estimated change, and start and end points.
 }
 \description{
 Computes the estimated percentual change in the population between two given time points, 
-and an approximate confidence interval for the change.
+and an approximate bootstrap confidence interval for the change.
 }
 \details{
 The function computes the estimated change between two chosen time points. 

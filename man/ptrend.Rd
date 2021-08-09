@@ -36,7 +36,7 @@ second and third elements give, respectively, the start and endpoints of the gri
 \item{...}{Further arguments passed to \code{\link[mgcv]{gam}}.}
 }
 \value{
-An object of class trend.
+An object of class trend that inherits from class gam.
 }
 \description{
 The function estimates a trend from count survey data.
@@ -45,14 +45,15 @@ The function estimates a trend from count survey data.
 The function estimates smooth or loglinear population trends, or indexes from simple design count survey data. 
 It is essentially a wrapper around a call to \code{\link[mgcv]{gam}}, processing its output using \code{\link[mgcv]{predict.gam}}
 to produce a trend estimate.
-For smooth trends, cubic regression splines for the temporal variable are set up by the term \code{s(var, k = k, fx = fx , bs = "cr")}
+Smooth trends for the temporal variable are set up by the term \code{s(var, k = k, fx = fx , bs = bs)}
 where \code{var} is the first argument to \code{\link[poptrend]{trend}} in the formula.
-For loglinear trends, the identity of \code{var} is used, and for index models a factor variable is constructed from \code{var}.
+For loglinear trends, the identity of \code{var} is used, and for index models a factor variable is constructed from \code{var}
+with one level for each unique time point in \code{var} with corresponding observations in the data.
 
 Temporal random effects are set up by converting the temporal variable supplied to \code{\link{trend}} to a factor variable
 and adding this factor variable to the data supplied to \code{\link[mgcv]{gam}}.
 
-Bootstrap confidence intervals are computed by drawing normally distributed random variable with means equal to the
+Bootstrap confidence intervals are computed by drawing normally distributed random variables with means equal to the
 estimated coefficients and covariance matrix equal to the Bayesian posterior covariance matrix (see \link[mgcv]{vcov.gam}).
 }
 \examples{
@@ -62,7 +63,7 @@ data = simTrend(15, 25)
 ## and automatic selection of degrees of freedom
 trSmo = ptrend(count ~ trend(year, tempRE = TRUE, type = "smooth") + site, data = data)
 ## Check the model fit
-checkFit(trSmo)
+gam.check(trSmo)
 ## Plot the trend
 plot(trSmo)
 summary(trSmo)
