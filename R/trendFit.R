@@ -415,7 +415,19 @@ computeRawTrend = function(object, newdata, estimate, resid, nBoot = 0) {
 
 
 
-
+##' This function can be used to update the baseline for indices computed from a trend object.
+##' 
+##' @title Update the baseline of a trend object.
+##' @param object An object of class trend.
+##' @param baseline A time point or vector of time points used to set baseline of the trend. 
+##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
+##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
+##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
+##'               By default, the first time point is taken as the reference.
+##' @param level The confidence level for uncertainty estimates.
+##' @return A trend object with updated baseline and confidence level.
+##' @export
+##' @author Jonas Knape
 updateBaseline = function(object, baseline = NA, level = .95) {
   timeVar = object$timeVar
   if (length(baseline) == 1) { 
