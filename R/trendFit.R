@@ -419,11 +419,10 @@ computeRawTrend = function(object, newdata, estimate, resid, nBoot = 0) {
 ##' 
 ##' @title Update the baseline of a trend object.
 ##' @param object An object of class trend.
-##' @param baseline A time point or vector of time points used to set baseline of the trend. 
-##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
-##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
-##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
-##'               By default, the first time point is taken as the reference.
+##' @param baseline A single time point, or vector of time points, that are used to define the reference 
+##'               level for the index. Can only contain time points for which there are observations in the data.
+##'               If baseline is a vector of length larger than one, the estimated mean over all the time 
+##'               points is taken as the reference. By default, the first time point in the data is taken as the reference.
 ##' @param level The confidence level for uncertainty estimates.
 ##' @return A trend object with updated baseline and confidence level.
 ##' @export

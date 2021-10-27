@@ -42,11 +42,11 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3, 
 ##' 
 ##' There is an additional option of plotting each of the bootstrapped trends.
 ##' @param x A fitted object of class trend.
-##' @param baseline A time point or vector of time points used to set baseline of the trend. 
-##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
-##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
-##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
-##'               By default, the first time point is taken as the reference.
+##' @param baseline A single time point, or vector of time points, that are used to define the reference 
+##'               level for the index. Can only contain time points for which there are observations in the data.
+##'               If baseline is a vector of length larger than one, the estimated mean over all the time 
+##'               points is taken as the reference. Defaults to NULL in which case the current baseline of the
+##'               x is used (often the first time point in the data).
 ##' @param ylab The label of the y-axis.
 ##' @param alpha The alpha level of confidence intervals.
 ##' @param trendCol The color of the trend line.
@@ -182,8 +182,9 @@ plot.trend = function(x, baseline = NULL, ylab = "abundance index", trendCol = "
 ##'          Defaults to 2000. 
 ##' @param type Determines whether the change is computed as a difference at the log scale, as a multiplicative factor, or as the percentage change. 
 ##'          One of 'factor', 'log' or 'percent'.
-##' @param pointwise If true the change between every pair of time points in start and end are computed. Otherwise . 
-##'          If both start and end are scalar, this argument is of little consequence.
+##' @param pointwise If TRUE the change between every pair of time points in start and end are computed. 
+##'           If FALSE the change between the mean over the time points in start and the mean over the time points in end is computed. 
+##'           If both start and end are scalar, this argument is of little consequence.
 ##' @return A list containing the estimated change, and start and end points.
 ##' @note If \code{start} or \code{end} are not contained in the \code{trendgrid} argument of the \code{\link{ptrend}} function, 
 ##' the change is computed between the values in the grid that are closest to these points.

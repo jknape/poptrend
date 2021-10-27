@@ -24,11 +24,11 @@
 \arguments{
 \item{x}{A fitted object of class trend.}
 
-\item{baseline}{A time point or vector of time points used to set baseline of the trend. 
-If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
-closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
-If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
-By default, the first time point is taken as the reference.}
+\item{baseline}{A single time point, or vector of time points, that are used to define the reference 
+level for the index. Can only contain time points for which there are observations in the data.
+If baseline is a vector of length larger than one, the estimated mean over all the time 
+points is taken as the reference. Defaults to NULL in which case the current baseline of the
+x is used (often the first time point in the data).}
 
 \item{ylab}{The label of the y-axis.}
 

@@ -29,7 +29,8 @@ Defaults to 2000.}
 \item{type}{Determines whether the change is computed as a difference at the log scale, as a multiplicative factor, or as the percentage change. 
 One of 'factor', 'log' or 'percent'.}
 
-\item{pointwise}{If true the change between every pair of time points in start and end are computed. Otherwise . 
+\item{pointwise}{If TRUE the change between every pair of time points in start and end are computed. 
+If FALSE the change between the mean over the time points in start and the mean over the time points in end is computed. 
 If both start and end are scalar, this argument is of little consequence.}
 }
 \value{
