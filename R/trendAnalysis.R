@@ -71,10 +71,11 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
   if (x$trendType == "index")
     trendEst = x$trendFrame$trendResid
   if (is.null(ciBase) | is.numeric(ciBase)) {
-    if (is.null(ciBase))
+    if (is.null(ciBase)) {
       bInt = which.min(isGridP)
-    else
+    } else {
       bInt = which.min(abs(tGrid - ciBase))
+    }
     tDiv = as.numeric(trendEst[bInt])
     if (!is.null(x$bootTrend))
       bDiv = x$bootTrend[bInt, ] #sapply(trend$bootTrend, function(bt) {bt$trendFrame[bInt, "trend"]})
@@ -117,9 +118,9 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
     timeVarFac = x$timeVarFac
     ind = match(unique(x$trendFrame[[timeVarFac]]), x$trendFrame[[timeVarFac]])
     resGrid = as.numeric(levels(x$trendFrame[[timeVarFac]][ind]))
-    if (!is.null(x$bootTrend))
+    if (!is.null(x$bootTrend)) {
       cip = apply(x$bootTrend * x$bootResid, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 1)) # Expensive
-    else if (!is.null(x$bootResid) & (grepl('CI', ranef) | !x$timeRE))
+    } else if (!is.null(x$bootResid) & (grepl('CI', ranef) | !x$timeRE))
       cip = apply(x$bootResid, 1, function(row) quantile(row / bDiv, probs = c(alpha/2, 1-alpha/2), type = 1)) # Expensive
   }   
   ## Start plotting
@@ -165,12 +166,13 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
     if(!is.null(x$bootResid)) {
       if (plotLines) {
         for (i in 1:ncol(x$bootResid)) {
-          if (x$timeRE)
+          if (x$timeRE) {
             points(resGrid, x$bootTrend[ind,i]*x$bootResid[ind, i] / bDiv[i], type = "p", pch = 20,cex = .5,
                    col = lineCol)
-          else
+          } else {
             points(resGrid, x$bootResid[ind, i] / bDiv[i], type = "p", pch = 20,cex = .5,
                    col = lineCol)
+          }
         }
       }
       if (grepl('CI', ranef) | x$trendType == "index") { # Plot confidence intervals for random effects or index.
@@ -181,8 +183,9 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
     if (x$timeRE) {
       if (grepl('point', ranef))
         points(resGrid, trendEst[ind]*x$trendFrame$trendResid[ind] / tDiv , type = "p", pch = 20, col = trendCol)
-    } else
+    } else {
       points(resGrid, x$trendFrame$trendResid[ind] / tDiv , type = "p", pch = 20, col = trendCol)
+    }
   }
 }
 
@@ -218,10 +221,11 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
 ##' change(trFit, 10, 20)
 change = function(trend, start, end, alpha = .05) {
   tGrid = trend$trendFrame[[trend$timeVar]]
-  if (trend$trendType != "index")
+  if (trend$trendType != "index") {
     trendEst = trend$trendFrame$trend
-  else
+  } else {
     trendEst = trend$trendFrame$trendResid
+  }
   sInd = which.min(abs(start - tGrid))
   eInd = which.min(abs(end - tGrid))
   percChange = function(tr) 100 * (tr[eInd] - tr[sInd]) / tr[sInd]
@@ -232,8 +236,9 @@ change = function(trend, start, end, alpha = .05) {
   } else if (trend$trendType == "index" & !is.null(trend$bootResid)) {
     bootpc = apply(trend$bootResid, 2, percChange)
     CI = quantile(bootpc, probs = c(alpha/2, 1 - alpha/2))
-  } else
+  } else {
     CI = NULL
+  }
   cat("Estimated percent change from ", trend$timeVar, " = ",  tGrid[sInd], " to ", tGrid[eInd], ": ", format(pc, digits = 2), "% ", 
       ifelse(is.null(CI), "", paste0("(", format(CI[1], digits = 2),"%, ", format(CI[2], digits =2), "%)")), "\n",sep = "")
   
@@ -313,15 +318,17 @@ summary.trend = function(object, ciBase = NULL, alpha = 0.05, ...) {
   isTP = which(!object$trendFrame$isGridP)
   timeVar = object$timeVar
   tGrid = object$trendFrame[[timeVar]]
-  if (object$trendType != "index")
+  if (object$trendType != "index") {
     trendEst = object$trendFrame$trend
-  else
+  } else {
     trendEst = object$trendFrame$trendResid
+  }
   if (is.null(ciBase) | is.numeric(ciBase)) {
-    if (is.null(ciBase))
+    if (is.null(ciBase)) {
       bInt = isTP[1]
-    else
+    } else {
       bInt = which.min(abs(tGrid - ciBase))
+    }
     tDiv = as.numeric(trendEst[bInt])
     if (!is.null(object$bootTrend))
       bDiv = object$bootTrend[bInt, ] #sapply(trend$bootTrend, function(bt) {bt$trendFrame[bInt, "trend"]})
@@ -373,10 +380,11 @@ print.summary.trend = function(x, ..., digits = 2) {
   print(x$formula)
   cat("Trend type: ", x$trendType)
   cat("\n\n")
-  if (x$trendType != "index")
+  if (x$trendType != "index") {
     cat("Trend estimates:\n\n")
-  else
+  } else {
     cat("Index estimates:\n\n")
+  }
   print(x$estimates, ..., digits = digits, row.names = FALSE)
   invisible(x)
 }

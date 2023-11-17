@@ -115,10 +115,11 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
   trendFrame$isGridP = c(rep(FALSE, length(tPoints)), rep(TRUE, nGrid[1]))[ix]
   trendFrame[[deparse(tf$tVar)]] = eval(tf$tVar, trendFrame)
   
-  if (engine == 'gam')
+  if (engine == 'gam') {
     gamFit = mgcv::gam(formula = tf$formula, data = data, family = family, ...) 
-  else 
+  } else { 
     gamFit = mgcv::bam(formula = tf$formula, data = data, family = family, ...) 
+  }
   if (tf$tempRE | tf$type == "index") {
     tLevs =  levels(model.frame(gamFit)[[timeVarFac]])
     trendFrame[[timeVarFac]] = factor(sapply(trendFrame[[timeVar]], 
@@ -131,9 +132,9 @@ ptrend = function(formula, data = list(), family = quasipoisson(), nGrid = 500, 
   
   for (i in seqP(1, ncol(mf))) {
     cname = colnames(mf)[i]
-    if(is.numeric(mf[[cname]]))
+    if(is.numeric(mf[[cname]])) {
       trendFrame[[cname]] = mean(mf[[i]], na.rm = TRUE) # dfhead[, i][1]
-    else {
+    } else {
       #browser()
       trendFrame[[cname]] = mf[[i]][which(!is.na(mf[[i]]))[1]]
     }
@@ -246,12 +247,13 @@ trend = function(var, tempRE = FALSE, type = "smooth", by = NA, k = -1, fx = FAL
     #tVar = substitute(factor(tVar)) 
     gTrend = ""
   }
-  if (tempRE)
+  if (tempRE) {
     gFac = paste0("s(", all.vars(tVar), .tVarExt, ", bs = \"re\")")
-  else if (type == "index")
+  } else if (type == "index") {
     gFac =paste0(all.vars(tVar), .tVarExt)
-  else
+  } else {
     gFac = ""
+  }
   list(gTrend = gTrend, gFac = gFac, 
        tVar =  tVar, predName = all.vars(tVar), 
        k = k, fx = fx, tempRE = tempRE, type = type, tVarExt = .tVarExt)
