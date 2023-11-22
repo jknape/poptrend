@@ -32,6 +32,8 @@
 ##'                 \code{\link[mgcv]{bam}}, which is less memory hungry and can be faster for large data sets.          
 ##' @param ... Further arguments passed to \code{\link[mgcv]{gam}}.
 ##' @return An object of class trend.
+##' @references{Knape, J. (2016). Decomposing trends in Swedish bird populations using generalized additive mixed models. 
+##'                               Journal of Applied Ecology, 53, 1852--1861. <doi:10.1111/1365-2664.12720>}
 ##' @examples
 ##' ## Simulate a data set with 15 sites and 25 years
 ##' data = simTrend(15, 25)

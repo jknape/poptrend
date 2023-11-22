@@ -40,7 +40,7 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##' 
 ##' There is an additional option of plotting each of the bootstrapped trends.
 ##' @param x A fitted object of class trend.
-##' @param ciBase A time point or function used to compute the baseline of the trend. 
+##' @param baseline A time point or function used to compute the baseline of the trend (see Knape 2023). 
 ##'               If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
 ##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 ##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
@@ -58,9 +58,11 @@ simTrend = function(nyear = 30, nsite = 40, mu = 3, timeSD = 0.1, siteSD = 0.3){
 ##'              One of 'pointCI', 'point', 'CI' or 'no'.
 ##' @param secDeriv If true, coloured boxes at the bottom of the plot shows segments where the second derivative of the smooth is significantly different from zero.
 ##' @param ... Further arguments passed to \code{\link[graphics]{plot.default}}.
+##' @references{Knape, J. (2023). Effects of choice of baseline on the uncertainty of population and biodiversity indices. 
+##'                               Environmental and Ecological Statistics, 30, 1--16. <doi:10.1007/s10651-022-00550-7>}
 ##' @export
 ##' @author Jonas Knape
-plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", trendCol = "black", lineCol = adjustcolor("black", alpha.f = 0.05), 
+plot.trend = function(x, baseline = NULL, alpha = .05, ylab = "abundance index", trendCol = "black", lineCol = adjustcolor("black", alpha.f = 0.05), 
                       shadeCol = adjustcolor("#0072B2", alpha.f = 0.4), incCol = "#009E73", decCol ="#D55E00",
                       plotGrid = TRUE, plotLines = FALSE, ranef = 'pointCI', secDeriv = TRUE, ...) {
   timeVar = x$timeVar
@@ -70,11 +72,11 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
   ranef = match.arg(ranef, c('pointCI', 'point', 'CI', 'no'))
   if (x$trendType == "index")
     trendEst = x$trendFrame$trendResid
-  if (is.null(ciBase) | is.numeric(ciBase)) {
-    if (is.null(ciBase)) {
+  if (is.null(baseline) | is.numeric(baseline)) {
+    if (is.null(baseline)) {
       bInt = which.min(isGridP)
     } else {
-      bInt = which.min(abs(tGrid - ciBase))
+      bInt = which.min(abs(tGrid - baseline))
     }
     tDiv = as.numeric(trendEst[bInt])
     if (!is.null(x$bootTrend))
@@ -82,12 +84,12 @@ plot.trend = function(x, ciBase = NULL, alpha = .05, ylab = "abundance index", t
     if (x$trendType == "index" & !is.null(x$bootResid))
       bDiv = x$bootResid[bInt, ]
   } else {
-    if(is.function(ciBase)) {
-      tDiv = ciBase(trendEst)
+    if(is.function(baseline)) {
+      tDiv = baseline(trendEst)
       if (!is.null(x$bootTrend))
-        bDiv = apply(x$bootTrend, 2, ciBase) #sapply(trend$bootTrend, function(bt) {mean(bt$trendFrame[["x"]])})
+        bDiv = apply(x$bootTrend, 2, baseline) #sapply(trend$bootTrend, function(bt) {mean(bt$trendFrame[["x"]])})
       if (x$trendType == "index" & !is.null(x$bootResid))
-        bDiv = apply(x$bootResid, 2, ciBase)
+        bDiv = apply(x$bootResid, 2, baseline)
     } else {
       tDiv = 1
       if (!is.null(trend$bootTrend))
@@ -305,7 +307,7 @@ print.trend = function(x, ...) {
 ##' or index values are also computed.
 ##' @title Summary of trend estimates
 ##' @param object A trend object returned by \code{\link{ptrend}}.
-##' @param ciBase A time point or function used to compute the baseline of the trend. 
+##' @param baseline A time point or function used to compute the baseline of the trend. 
 ##'               If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{ptrend}}
 ##'               closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 ##'               If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
@@ -314,7 +316,7 @@ print.trend = function(x, ...) {
 ##' @param alpha alpha level for approximate confidence intervals.
 ##' @export
 ##' @author Jonas Knape
-summary.trend = function(object, ciBase = NULL, alpha = 0.05, ...) {
+summary.trend = function(object, baseline = NULL, alpha = 0.05, ...) {
   isTP = which(!object$trendFrame$isGridP)
   timeVar = object$timeVar
   tGrid = object$trendFrame[[timeVar]]
@@ -323,11 +325,11 @@ summary.trend = function(object, ciBase = NULL, alpha = 0.05, ...) {
   } else {
     trendEst = object$trendFrame$trendResid
   }
-  if (is.null(ciBase) | is.numeric(ciBase)) {
-    if (is.null(ciBase)) {
+  if (is.null(baseline) | is.numeric(baseline)) {
+    if (is.null(baseline)) {
       bInt = isTP[1]
     } else {
-      bInt = which.min(abs(tGrid - ciBase))
+      bInt = which.min(abs(tGrid - baseline))
     }
     tDiv = as.numeric(trendEst[bInt])
     if (!is.null(object$bootTrend))
@@ -335,12 +337,12 @@ summary.trend = function(object, ciBase = NULL, alpha = 0.05, ...) {
     if (object$trendType == "index" & !is.null(object$bootResid))
       bDiv = object$bootResid[bInt, ]
   } else {
-    if(is.function(ciBase)) {
-      tDiv = ciBase(trendEst)
+    if(is.function(baseline)) {
+      tDiv = baseline(trendEst)
       if (!is.null(object$bootTrend))
-        bDiv = apply(object$bootTrend, 2, ciBase) #sapply(trend$bootTrend, function(bt) {mean(bt$trendFrame[["x"]])})
+        bDiv = apply(object$bootTrend, 2, baseline) #sapply(trend$bootTrend, function(bt) {mean(bt$trendFrame[["x"]])})
       if (object$trendType == "index" & !is.null(object$bootResid))
-        bDiv = apply(object$bootResid, 2, ciBase)
+        bDiv = apply(object$bootResid, 2, baseline)
     } else {
       tDiv = 1
       if (!is.null(trend$bootTrend))
