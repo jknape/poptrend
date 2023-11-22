@@ -4,12 +4,12 @@
 \alias{summary.trend}
 \title{Summary of trend estimates}
 \usage{
-\method{summary}{trend}(object, ciBase = NULL, alpha = 0.05, ...)
+\method{summary}{trend}(object, baseline = NULL, alpha = 0.05, ...)
 }
 \arguments{
 \item{object}{A trend object returned by \code{\link{ptrend}}.}
 
-\item{ciBase}{A time point or function used to compute the baseline of the trend. 
+\item{baseline}{A time point or function used to compute the baseline of the trend. 
 If the argument is numeric, the point in the \code{trendGrid} argument of the function \code{\link{ptrend}}
 closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.

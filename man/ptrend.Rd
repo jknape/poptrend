@@ -92,6 +92,10 @@ trInd = ptrend(count ~ trend(year, type = "index") + site + s(cov), data = data)
 plot(trInd)
 summary(trInd)
 }
+\references{
+{Knape, J. (2016). Decomposing trends in Swedish bird populations using generalized additive mixed models. 
+                              Journal of Applied Ecology, 53, 1852--1861. <doi:10.1111/1365-2664.12720>}
+}
 \author{
 Jonas Knape
 }

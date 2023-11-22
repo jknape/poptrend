@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{trend}(
   x,
-  ciBase = NULL,
+  baseline = NULL,
   alpha = 0.05,
   ylab = "abundance index",
   trendCol = "black",
@@ -24,7 +24,7 @@
 \arguments{
 \item{x}{A fitted object of class trend.}
 
-\item{ciBase}{A time point or function used to compute the baseline of the trend. 
+\item{baseline}{A time point or function used to compute the baseline of the trend (see Knape 2023). 
 If the argument is numeric, the point in the \var{trendGrid} argument of the function \code{\link{ptrend}}
 closest to this value will be taken as the baseline (i.e. the estimated trend will be 1 at this point).
 If the argument is a function, the function is applied to trends and the resulting value is used as the baseline.
@@ -70,6 +70,10 @@ significantly positive or negative are marked by coloured boxes at the bottom of
 
 
 There is an additional option of plotting each of the bootstrapped trends.
+}
+\references{
+{Knape, J. (2023). Effects of choice of baseline on the uncertainty of population and biodiversity indices. 
+                              Environmental and Ecological Statistics, 30, 1--16. <doi:10.1007/s10651-022-00550-7>}
 }
 \author{
 Jonas Knape
